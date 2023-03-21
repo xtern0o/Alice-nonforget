@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import logging
 
-
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -36,6 +35,19 @@ def main():
             "session": session,
             "version": version
         }
+        # ТЕЩУ КОМАНДЫ !!! НЕ РАБОТАЕТ(((
+        if session['command'] == "запустить":
+            answer_response = {
+                "response": {
+                    'text': 'Старт',
+                    'tts': 'Старт',
+                    'end_session': False,
+                },
+                "session": session,
+                "version": version
+            }
+
+            return jsonify(answer_response)
         return jsonify(answer_response)
 
 

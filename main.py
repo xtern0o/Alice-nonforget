@@ -155,12 +155,13 @@ def main():
             'нет' in request.json['request']['command'] and 'да' not in request.json['request']['command']:
             answer_response = {
                 "response": {
-                    "text": 'Хорошо',
-                    "tts": 'Хорошо'
+                    "text": 'Без бэ. Опвторите ввод названия',
+                    "tts": 'Да без бэ. Повторите название'
                 },
                 "session": session,
                 "version": version
             }
+            state.CREATING_SCENARY = 1
             return jsonify(answer_response)
 
 

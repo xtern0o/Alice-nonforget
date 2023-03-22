@@ -1,8 +1,10 @@
-# не попадает под условя кнопок (надо исправить)
+from pprint import pprint
 
 from flask import Flask, request, jsonify
 import logging
 
+import settings
+from database import DataBase
 from states import States
 
 app = Flask(__name__)
@@ -11,15 +13,18 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-states = States()
+state = States()
+database = DataBase(settings.MONGO_HOST, settings.MONGO_PORT)
 
 
 @app.route('/post', methods=['POST'])
 def main():
-    session = request.json['session']
-    version = request.json['version']
-    logging.info(request.json)
+    data = request.json
+    session = data['session']
+    version = data['version']
+    logging.info(data)
     if session['new']:
+        database.add_new_user(session['user']['user_id'])
         answer_response = {
             "response": {
                 'text': 'Вы запустили сценарий "незабывайка".'
@@ -31,7 +36,7 @@ def main():
                         "hide": True
                     },
                     {
-                        "title": "Запустить",
+                        "title": "Использовать",
                         "hide": True
                     },
                     {
@@ -46,8 +51,10 @@ def main():
         }
         return jsonify(answer_response)
 
-    if not (states.get_delete_state() or states.get_creating_state() or states.get_using_state()):
-        if request.json['request']['command'] == 'cоздать':
+    #  Начальное состояние Алисы
+    if state.get_state() == '*':
+
+        if request.json['request']['command'] == 'создать':
             answer_response = {
                 "response": {
                     'text': 'Напишите название нового навыка',
@@ -57,10 +64,10 @@ def main():
                 "session": session,
                 "version": version
             }
-            states.set_creating_state(1)
+            state.set_creating_state()
             return jsonify(answer_response)
 
-        if request.json['request']['command'] == 'использовать':
+        elif request.json['request']['command'] == 'использовать':
             answer_response = {
                 "response": {
                     'text': 'Напишите название навыка',
@@ -70,10 +77,10 @@ def main():
                 "session": session,
                 "version": version
             }
-            states.set_using_state(1)
+            state.set_using_state()
             return jsonify(answer_response)
 
-        if request.json['request']['command'] == 'удалить':
+        elif request.json['request']['command'] == 'удалить':
             answer_response = {
                 "response": {
                     'text': 'Напишите название навыка для удаления',
@@ -83,20 +90,33 @@ def main():
                 "session": session,
                 "version": version
             }
-            states.set_delete_state(1)
+            state.set_delete_state()
             return jsonify(answer_response)
 
-        answer_response = {
-            "response": {
-                'text': 'Некрректная команда. Повторите ввод',
-                'tts': 'Я не распознала вашу команду. Повторите, пожалуйста',
-                'end_session': False
-            },
-            "session": session,
-            "version": version
-        }
-        return jsonify(answer_response)
+        else:
+            answer_response = {
+                "response": {
+                    'text': 'Некрректная команда. Повторите ввод',
+                    'tts': 'Я не распознала вашу команду. Повторите, пожалуйста',
+                    'end_session': False
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
+
+    #  Создания нового сценария
+    elif state.get_state() == 'CREATING_SCENARY':
+        ...
+
+    #  Использование уже существующего сценария
+    elif state.get_state() == 'USE_EXIST_SCENARY':
+        ...
+
+    #  Удаление сценария
+    elif state.get_state() == 'DELETE_SCENARY':
+        ...
 
 
 if __name__ == '__main__':
-    app.run(port=6000, debug=True)
+    app.run(port=5000, debug=True)

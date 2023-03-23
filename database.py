@@ -13,43 +13,94 @@ class DataBase:
 
     def add_new_user(self, user_id: str) -> None:
         if not self.users_collection.find_one({'user_id': user_id}):
-            self.users_collection.insert_one({'user_id': user_id,
-                                              'scenery': {
-                                                  'state': '',
-                                                  'stage': 0,
-                                              }, })
-            self.relations_collection.insert_one({'user_id': user_id,
-                                                  'reminders_ids': [], })
+            self.users_collection.insert_one(
+                {
+                    'user_id': user_id,
+                    'scenery': {
+                        'state': '',
+                        'stage': 0,
+                    },
+                }
+            )
+            self.relations_collection.insert_one(
+                {
+                    'user_id': user_id,
+                    'reminders_ids': [],
+                }
+            )
 
     def get_state(self, user_id: str) -> str:
-        return self.users_collection.find_one({'user_id': user_id, })['scenery']['state']
+        return self.users_collection.find_one(
+            {
+                'user_id': user_id,
+            }
+        )['scenery']['state']
 
     def get_stage(self, user_id: str) -> str:
-        return self.users_collection.find_one({'user_id': user_id, })['scenery']['stage']
+        return self.users_collection.find_one(
+            {
+                'user_id': user_id,
+            }
+        )['scenery']['stage']
 
     def set_state(self, user_id: str, state: str) -> None:
-        self.users_collection.update_one({'user_id': user_id, },
-                                         {'$set': {'user_id': user_id,
-                                                   'scenery': {'state': state,
-                                                               'stage': self.get_stage(user_id), }, }, })
+        self.users_collection.update_one(
+            {
+                'user_id': user_id,
+            },
+            {
+                '$set': {
+                    'user_id': user_id,
+                    'scenery': {
+                        'state': state,
+                        'stage': self.get_stage(user_id),
+                    },
+                },
+            }
+        )
 
     def set_stage(self, user_id: str, stage: int) -> None:
-        self.users_collection.update_one({'user_id': user_id, },
-                                         {'$set': {'user_id': user_id,
-                                                   'scenery': {'state': self.get_state(user_id),
-                                                               'stage': stage, }, }, })
+        self.users_collection.update_one(
+            {
+                'user_id': user_id,
+            },
+            {
+                '$set': {
+                    'user_id': user_id,
+                    'scenery': {
+                        'state': self.get_state(user_id),
+                        'stage': stage,
+                    },
+                },
+            }
+        )
 
     def add_reminder(self, reminder: dict) -> None:
         user_id = reminder['user_id']
-        reminder_id = self.reminder_collection.insert_one({'title': reminder['title'],
-                                                           'todo': reminder['todo'], }).inserted_id
-        self.relations_collection.update_one({'user_id': user_id, },
-                                             {'$set': {'user_id': user_id,
-                                                       'reminders_ids': self.get_reminders_ids(
-                                                           user_id).append(reminder_id), }, })
+        reminder_id = self.reminder_collection.insert_one(
+            {
+                'title': reminder['title'],
+                'todo': reminder['todo'],
+            }
+        ).inserted_id
+        self.relations_collection.update_one(
+            {
+                'user_id': user_id,
+            },
+            {
+                '$set': {
+                    'user_id': user_id,
+                    'reminders_ids': self.get_reminders_ids(user_id).append(reminder_id),
+                },
+            }
+        )
 
     def get_reminders_ids(self, user_id: str) -> list:
-        return self.relations_collection.find_one({'user_id': user_id})['reminders_ids']
+        return self.relations_collection.find_one(
+            {
+                'user_id': user_id
+            }
+        )['reminders_ids']
 
     def get_users_collection(self) -> list:
         return list(self.users_collection.find())

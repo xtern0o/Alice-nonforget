@@ -140,8 +140,8 @@ def main():
             'да' in request.json['request']['command'] and 'нет' not in request.json['request']['command']:
             answer_response = {
                 "response": {
-                    "text": 'Отлично',
-                    "tts": 'ааыыэвуечфыа'
+                    "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом "Всё"',
+                    "tts": 'Поняла. Теперь произнесите предметы по порядку. Закончите ключевым словом "Всё"'
                 },
                 "session": session,
                 "version": version
@@ -160,6 +160,44 @@ def main():
             }
             state.set_stage(1)
             return jsonify(answer_response)
+
+    if state.is_creating(3):
+        if data['request']['command']:
+            if data['request']['command'] != 'всё':
+                item = data['request']['command']
+                # some validation of item at this step
+                scenary_template["todo"].append(item)
+                answer_response = {
+                    "response": {
+                        "text": "Дальше",
+                        "tts": "Записала"
+                    },
+                    "session": session,
+                    "version": version
+                }
+                return jsonify(answer_response)
+
+            # добавление полноценного сценария в базу данных
+            state.set_stage(4)
+            answer_response = {
+                "response": {
+                    "text": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен',
+                    "tts": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен'
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
+
+        answer_response = {
+            "response": {
+                "text": "Некорректный ввод",
+                "tts": "Я вас не поняла. Повторите"
+            },
+            "session": session,
+            "version": version
+        }
+        return jsonify(answer_response)
 
 
 if __name__ == '__main__':

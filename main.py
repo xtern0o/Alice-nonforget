@@ -12,6 +12,14 @@ state = States()
 scenary_template = {'title': '', 'todo': [], 'user_id': ''}
 
 
+def zero_all():
+    global scenary_template
+    scenary_template['title'] = ''
+    scenary_template['todo'] = []
+    scenary_template['user_id'] = ''
+    state.set_zero()
+
+
 @app.route('/post', methods=['POST'])
 def main():
     global scenary_template
@@ -45,7 +53,6 @@ def main():
                         "hide": True
                     }
                 ],
-                'end_session': False,
             },
             "session": session,
             "version": version
@@ -181,12 +188,29 @@ def main():
             state.set_stage(4)
             answer_response = {
                 "response": {
-                    "text": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен',
-                    "tts": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен'
+                    "text": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен.'
+                            f' Ваши дальнейшие действия?',
+                    "tts": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен.'
+                           f' Ваши дальнейшие действия?',
+                    'buttons': [
+                        {
+                            "title": "Создать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Использовать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Удалить",
+                            "hide": True
+                        }
+                    ],
                 },
                 "session": session,
                 "version": version
             }
+            state.set_zero()
             return jsonify(answer_response)
 
         answer_response = {

@@ -21,10 +21,10 @@ def main():
     version = data['version']
     if session['new']:
         # database.add_new_user(session['user']['user_id'])
-        print('2')
         scenary_template['title'] = ''
         scenary_template['todo'] = []
         scenary_template['user_id'] = session['user']['user_id']
+        state.set_zero()
 
         answer_response = {
             "response": {
@@ -53,9 +53,8 @@ def main():
         return jsonify(answer_response)
 
     #  Начальное состояние Алисы
-    if not (state.DELETE_SCENARY or state.CREATING_SCENARY or state.USE_EXIST_SCENARY):
-
-        if request.json['request']['command'] == 'создать':
+    if not (state.is_creating() or state.is_delete() or state.is_using()):
+        if data['request']['command'] == 'создать':
             answer_response = {
                 "response": {
                     'text': 'Напишите название нового навыка',
@@ -64,10 +63,10 @@ def main():
                 "session": session,
                 "version": version
             }
-            state.CREATING_SCENARY = 1
+            state.set_creating()
             return jsonify(answer_response)
 
-        if request.json['request']['command'] == 'использовать':
+        if data['request']['command'] == 'использовать':
             answer_response = {
                 "response": {
                     'text': 'Напишите название навыка',
@@ -76,10 +75,10 @@ def main():
                 "session": session,
                 "version": version
             }
-            state.USE_EXIST_SCENARY = 1
+            state.set_using()
             return jsonify(answer_response)
 
-        if request.json['request']['command'] == 'удалить':
+        if data['request']['command'] == 'удалить':
             answer_response = {
                 "response": {
                     'text': 'Напишите название навыка для удаления',
@@ -88,7 +87,7 @@ def main():
                 "session": session,
                 "version": version
             }
-            state.DELETE_SCENARY = 1
+            state.set_delete()
             return jsonify(answer_response)
 
         answer_response = {
@@ -102,11 +101,9 @@ def main():
         return jsonify(answer_response)
 
     # Сценарий создания
-    if state.CREATING_SCENARY == 1:
-
-        if request.json['request']['command']:
+    if state.is_creating(1):
+        if data['request']['command']:
             scenary_template['title'] = request.json['request']['command']
-            state.CREATING_SCENARY = 2
             answer_response = {
                 "response": {
                     "text": f'Название сценария "{scenary_template["title"]}"',
@@ -125,6 +122,7 @@ def main():
                 "session": session,
                 "version": version
             }
+            state.set_stage(2)
             return jsonify(answer_response)
 
         answer_respone = {
@@ -137,21 +135,20 @@ def main():
         }
         return jsonify(answer_respone)
 
-    if state.CREATING_SCENARY == 2:
-
-        if request.json['request']['command'] == 'да' or \
+    if state.is_creating(2):
+        if data['request']['command'] == 'да' or \
             'да' in request.json['request']['command'] and 'нет' not in request.json['request']['command']:
-            state.CREATING_SCENARY = 3
             answer_response = {
                 "response": {
                     "text": 'Отлично',
-                    "tts": 'иди нахуй'
+                    "tts": 'ааыыэвуечфыа'
                 },
                 "session": session,
                 "version": version
             }
+            state.set_stage(3)
             return jsonify(answer_response)
-        if request.json['request']['command'] == 'нет' or \
+        if data['request']['command'] == 'нет' or \
             'нет' in request.json['request']['command'] and 'да' not in request.json['request']['command']:
             answer_response = {
                 "response": {
@@ -161,7 +158,7 @@ def main():
                 "session": session,
                 "version": version
             }
-            state.CREATING_SCENARY = 1
+            state.set_stage(1)
             return jsonify(answer_response)
 
 

@@ -79,7 +79,7 @@ class DataBase:
         reminder_id = self.reminder_collection.insert_one(
             {
                 'title': reminder['title'],
-                'todo': reminder['todo'],
+                'todo_list': reminder['todo_list'],
             }
         ).inserted_id
         self.relations_collection.update_one(
@@ -106,7 +106,7 @@ class DataBase:
                 'user_id': user_id
             },
             {
-                '$pop': {
+                '$pull': {
                     'reminders_ids': self.get_id_by_title(title),
                 },
             }
@@ -143,6 +143,13 @@ class DataBase:
                 '_id': reminder_id,
             }
         )['title']
+
+    def get_todo_list(self, title: str) -> list:
+        return self.reminder_collection.find_one(
+            {
+                'title': title,
+            }
+        )['todo_list']
 
     def get_users_collection(self) -> list:
         return list(self.users_collection.find())

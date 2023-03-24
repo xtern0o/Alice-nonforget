@@ -3,32 +3,32 @@ class States:
         self.scenary = ""
         self.stage = 0
 
-    def set_creating(self, stage: int = 1):
+    def set_creating(self, stage: int = 1) -> None:
         self.scenary = "CREATING"
         self.stage = stage
 
-    def set_using(self, stage: int = 1):
+    def set_using(self, stage: int = 1) -> None:
         self.scenary = "USING"
         self.stage = stage
 
-    def set_delete(self, stage: int = 1):
+    def set_delete(self, stage: int = 1) -> None:
         self.scenary = "DELETE"
         self.stage = stage
 
-    def set_stage(self, value):
+    def set_stage(self, value) -> None:
         self.stage = value
 
-    def is_creating(self, stage=None):
+    def is_creating(self, stage=None) -> bool:
         if stage:
             return self.scenary == "CREATING" and self.stage == stage
         return self.scenary == "CREATING" and self.stage
 
-    def is_using(self, stage=None):
+    def is_using(self, stage=None) -> bool:
         if stage:
             return self.scenary == "USING" and self.stage == stage
         return self.scenary == "USING" and self.stage
 
-    def is_delete(self, stage=None):
+    def is_delete(self, stage=None) -> bool:
         if stage:
             return self.scenary == "DELETE" and self.stage == stage
         return self.scenary == "DELETE" and self.stage

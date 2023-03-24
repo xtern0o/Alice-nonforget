@@ -144,10 +144,11 @@ def main():
 
     if state.is_creating(2):
         if data['request']['command'] == 'да' or \
-            'да' in request.json['request']['command'] and 'нет' not in request.json['request']['command']:
+                'да' in request.json['request']['command'] and 'нет' not in request.json['request']['command']:
             answer_response = {
                 "response": {
-                    "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом "Всё"',
+                    "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом '
+                            '"Всё"',
                     "tts": 'Поняла. Теперь произнесите предметы по порядку. Закончите ключевым словом "Всё"'
                 },
                 "session": session,
@@ -156,7 +157,7 @@ def main():
             state.set_stage(3)
             return jsonify(answer_response)
         if data['request']['command'] == 'нет' or \
-            'нет' in request.json['request']['command'] and 'да' not in request.json['request']['command']:
+                'нет' in request.json['request']['command'] and 'да' not in request.json['request']['command']:
             answer_response = {
                 "response": {
                     "text": 'Без бэ. Опвторите ввод названия',

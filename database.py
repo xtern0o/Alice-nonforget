@@ -96,9 +96,53 @@ class DataBase:
     def get_reminders_ids(self, user_id: str) -> list:
         return list(self.relations_collection.find_one(
             {
+                'user_id': user_id,
+            },
+        )['reminders_ids'])
+
+    def delete_reminder(self, user_id: str, title: str) -> None:
+        self.relations_collection.update_one(
+            {
                 'user_id': user_id
+            },
+            {
+                '$pop': {
+                    'reminders_ids': self.get_id_by_title(title),
+                },
+            }
+        )
+        self.reminder_collection.delete_one(
+            {
+                'title': title,
+            }
+        )
+
+    def get_id_by_title(self, title: str) -> str:
+        return self.reminder_collection.find_one(
+            {
+                'title': title,
+            }
+        )['_id']
+
+    def get_reminders_titles(self, user_id: str) -> list:
+        reminders_titles = list()
+        for reminder_id in self.get_reminders_ids(user_id):
+            reminders_titles.append(self.get_reminder_title(reminder_id))
+        return reminders_titles
+
+    def get_reminders_ids(self, user_id: str) -> list:
+        return list(self.relations_collection.find_one(
+            {
+                'user_id': user_id,
             }
         )['reminders_ids'])
+
+    def get_reminder_title(self, reminder_id: ObjectId) -> str:
+        return self.reminder_collection.find_one(
+            {
+                '_id': reminder_id,
+            }
+        )['title']
 
     def get_users_collection(self) -> list:
         return list(self.users_collection.find())

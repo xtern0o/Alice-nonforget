@@ -1,4 +1,5 @@
 import pymongo
+from bson import ObjectId
 
 from settings import MONGO_DB
 
@@ -49,8 +50,7 @@ class DataBase:
                 'user_id': user_id,
             },
             {
-                '$set': {
-                    'user_id': user_id,
+                '$push': {
                     'scenery': {
                         'state': state,
                         'stage': self.get_stage(user_id),
@@ -65,8 +65,7 @@ class DataBase:
                 'user_id': user_id,
             },
             {
-                '$set': {
-                    'user_id': user_id,
+                '$push': {
                     'scenery': {
                         'state': self.get_state(user_id),
                         'stage': stage,
@@ -88,19 +87,18 @@ class DataBase:
                 'user_id': user_id,
             },
             {
-                '$set': {
-                    'user_id': user_id,
-                    'reminders_ids': self.get_reminders_ids(user_id).append(reminder_id),
+                '$push': {
+                    'reminders_ids': reminder_id,
                 },
             }
         )
 
     def get_reminders_ids(self, user_id: str) -> list:
-        return self.relations_collection.find_one(
+        return list(self.relations_collection.find_one(
             {
                 'user_id': user_id
             }
-        )['reminders_ids']
+        )['reminders_ids'])
 
     def get_users_collection(self) -> list:
         return list(self.users_collection.find())

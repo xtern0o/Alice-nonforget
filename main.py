@@ -1,37 +1,37 @@
 from flask import Flask, request, jsonify
 
 import settings
-# from database import DataBase
+from database import DataBase
 from states import States
 
 app = Flask(__name__)
 
 state = States()
-# database = DataBase(settings.MONGO_HOST, settings.MONGO_PORT)
+database = DataBase(settings.MONGO_HOST, settings.MONGO_PORT)
 
-scenary_template = {'title': '', 'todo': [], 'user_id': ''}
+reminder_template = {'title': '', 'todo': [], 'user_id': ''}
 
 
 def zero_all():
-    global scenary_template
-    scenary_template['title'] = ''
-    scenary_template['todo'] = []
-    scenary_template['user_id'] = ''
+    global reminder_template
+    reminder_template['title'] = ''
+    reminder_template['todo'] = []
+    reminder_template['user_id'] = ''
     state.set_zero()
 
 
 @app.route('/post', methods=['POST'])
 def main():
-    global scenary_template
+    global reminder_template
 
     data = request.json
     session = data['session']
     version = data['version']
     if session['new']:
-        # database.add_new_user(session['user']['user_id'])
-        scenary_template['title'] = ''
-        scenary_template['todo'] = []
-        scenary_template['user_id'] = session['user']['user_id']
+        database.add_new_user(session['user']['user_id'])
+        reminder_template['title'] = ''
+        reminder_template['todo'] = []
+        reminder_template['user_id'] = session['user']['user_id']
         state.set_zero()
 
         answer_response = {
@@ -110,11 +110,11 @@ def main():
     # Сценарий создания
     if state.is_creating(1):
         if data['request']['command']:
-            scenary_template['title'] = request.json['request']['command']
+            reminder_template['title'] = request.json['request']['command']
             answer_response = {
                 "response": {
-                    "text": f'Название сценария "{scenary_template["title"]}"',
-                    "tts": f'Я вас правильно поняла? Название нового сценария "{scenary_template["title"]}"',
+                    "text": f'Название сценария "{reminder_template["title"]}"',
+                    "tts": f'Я вас правильно поняла? Название нового сценария "{reminder_template["title"]}"',
                     "buttons": [
                         {
                             "title": "Да",
@@ -132,7 +132,7 @@ def main():
             state.set_stage(2)
             return jsonify(answer_response)
 
-        answer_respone = {
+        answer_response = {
             "response": {
                 'text': 'Некорректный ввод. Повторите, пожалуйста',
                 'tts': 'Я вас не поняла, повторите еще раз',
@@ -140,7 +140,7 @@ def main():
             "session": session,
             "version": version
         }
-        return jsonify(answer_respone)
+        return jsonify(answer_response)
 
     if state.is_creating(2):
         if data['request']['command'] == 'да' or \
@@ -174,7 +174,7 @@ def main():
             if data['request']['command'] != 'всё':
                 item = data['request']['command']
                 # some validation of item at this step
-                scenary_template["todo"].append(item)
+                reminder_template["todo"].append(item)
                 answer_response = {
                     "response": {
                         "text": "Дальше",
@@ -185,13 +185,13 @@ def main():
                 }
                 return jsonify(answer_response)
 
-            # добавление полноценного сценария в базу данных
+            database.add_reminder(reminder_template)
             state.set_stage(4)
             answer_response = {
                 "response": {
-                    "text": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен.'
+                    "text": f'Отлично. Сценарий под названием {reminder_template["title"]} добавлен.'
                             f' Ваши дальнейшие действия?',
-                    "tts": f'Отлично. Сценарий под названием {scenary_template["title"]} добавлен.'
+                    "tts": f'Отлично. Сценарий под названием {reminder_template["title"]} добавлен.'
                            f' Ваши дальнейшие действия?',
                     'buttons': [
                         {

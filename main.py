@@ -325,6 +325,84 @@ def main():
         }
         return jsonify(answer_response)
 
+    # тут обработка начального состояния, без доп. проверок.
+    if state.is_using(1):
+        if command in database.get_reminders_titles(user_id):
+            reminder_template['title'] = command
+
+            # тут уже вывод всех айтемов пользователя
+            items = database.get_todo_list(reminder_template['title'])
+            answer_response = {
+                "response": {
+                    "text": f'Напоминалка {reminder_template["title"]}. Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    'buttons': [
+                        {
+                            "title": "Да",
+                            "hide": True
+                        },
+                        {
+                            "title": "Нет",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+
+            state.set_stage(2)
+            return jsonify(answer_response)
+
+    # если пользователь решит повторить список айтемов, мб стоит сделать по-другому, не меняя стейж
+    if state.is_using(2):
+        if command == "да":
+            items = database.get_todo_list(reminder_template['title'])
+            answer_response = {
+                "response": {
+                    "text": f'Хорошо, повторяю. Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    'buttons': [
+                        {
+                            "title": "Да",
+                            "hide": True
+                        },
+                        {
+                            "title": "Нет",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+
+            return jsonify(answer_response)
+
+        elif command == "нет":
+            answer_response = {
+                "response": {
+                    "text": f'Надеюсь, вы ничего не забыли. Вы хотите создать напоминалку или использовать/удалить существую?',
+                    'buttons': [
+                        {
+                            "title": "Создать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Использовать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Удалить",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+
+            state.set_zero()
+            return jsonify(answer_response)
+
 
 if __name__ == '__main__':
     app.run(port=6000, debug=True)

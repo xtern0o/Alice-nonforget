@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import settings
 from database import DataBase
 from states import States
+from validators import check_line
 
 app = Flask(__name__)
 
@@ -135,7 +136,7 @@ def main():
         return jsonify(answer_response)
 
     if state.is_creating(2):
-        if command == 'да' or 'да' in command and 'нет' not in command:
+        if check_line(command):
             answer_response = {
                 "response": {
                     "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом '
@@ -148,7 +149,7 @@ def main():
             state.set_stage(3)
             return jsonify(answer_response)
 
-        if command == 'нет' or 'нет' in command and 'да' not in command:
+        if not check_line(command):
             answer_response = {
                 "response": {
                     "text": 'Без бэ. Опвторите ввод названия',
@@ -252,7 +253,7 @@ def main():
         return jsonify(answer_response)
 
     if state.is_delete(2):
-        if command == 'да' or 'да' in command and 'нет' not in command:
+        if check_line(command):
             answer_response = {
                 "response": {
                     "text": f'Напоминалка {reminder_template[user_id]["title"]} удалена. Что вы хотите сделать теперь?',
@@ -279,7 +280,7 @@ def main():
             state.set_zero()
             return jsonify(answer_response)
 
-        if command == 'нет' or 'нет' in command and 'да' not in command:
+        if not check_line(command):
             answer_response = {
                 "response": {
                     "text": f'Удаление напоминалки {reminder_template[user_id]["title"]} отменено. Что вы хотите сделать теперь?',
@@ -345,7 +346,7 @@ def main():
 
     # если пользователь решит повторить список айтемов, мб стоит сделать по-другому, не меняя стейж
     if state.is_using(2):
-        if command == "да":
+        if check_line(command):
             items = database.get_reminder_list(reminder_template[user_id]['title'])
             answer_response = {
                 "response": {
@@ -367,7 +368,7 @@ def main():
 
             return jsonify(answer_response)
 
-        elif command == "нет":
+        elif not check_line(command):
             answer_response = {
                 "response": {
                     "text": f'Надеюсь, вы ничего не забыли. Вы хотите создать напоминалку или использовать/удалить существую?',

@@ -74,12 +74,12 @@ class DataBase:
             }
         )
 
-    def add_reminder(self, reminder: dict) -> None:
-        user_id = reminder['user_id']
+    def add_reminder(self, user_id, reminder: dict) -> None:
+        user_id = user_id
         reminder_id = self.reminder_collection.insert_one(
             {
-                'title': reminder['title'],
-                'todo_list': reminder['todo_list'],
+                'title': reminder[user_id]['title'],
+                'reminder_list': reminder[user_id]['reminder_list'],
             }
         ).inserted_id
         self.relations_collection.update_one(
@@ -144,12 +144,12 @@ class DataBase:
             }
         )['title']
 
-    def get_todo_list(self, title: str) -> list:
+    def get_reminder_list(self, title: str) -> list:
         return self.reminder_collection.find_one(
             {
                 'title': title,
             }
-        )['todo_list']
+        )['reminder_list']
 
     def get_users_collection(self) -> list:
         return list(self.users_collection.find())

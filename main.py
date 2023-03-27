@@ -344,7 +344,10 @@ def main():
             return jsonify(answer_response)
         return jsonify(
             {
-                "response": get_error_phrase("not_found_error"),
+                "response": {
+                    "text": get_error_phrase("not_found_error")["text"].format(command),
+                    "tts": get_error_phrase("not_found_error")["tts"].format(command)
+                },
                 "session": session,
                 "version": version
             }
@@ -379,7 +382,7 @@ def main():
             answer_response = {
                 "response": {
                     "text": get_phrase(state.get_state(), "second_stage_disagree")["text"],
-                    "tts": get_phrase(state.get_state(), "second_state_disagree")["tts"]
+                    "tts": get_phrase(state.get_state(), "second_state_disagree")["tts"],
                     'buttons': [
                         {
                             "title": "Создать",

@@ -284,32 +284,18 @@ def main():
                 "session": session,
                 "version": version
             }
-            state.set_zero()
             return jsonify(answer_response)
 
         elif not check_line(command):
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "second_stage_disagree")["text"],
-                    "tts": get_phrase(state.get_state(), "second_state_disagree")["tts"],
-                    'buttons': [
-                        {
-                            "title": "Создать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Использовать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Удалить",
-                            "hide": True
-                        }
-                    ],
+                    "text": "Надеюсь, что вы ничего не забыли",
+                    "tts": "Надеюсь, что вы ничего не забыли",
                 },
                 "session": session,
                 "version": version
             }
+            state.set_zero()
             return jsonify(answer_response)
 
 

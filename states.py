@@ -1,18 +1,18 @@
 class States:
     def __init__(self):
-        self.scenary = ""
+        self.state = "ZERO"
         self.stage = 0
 
-    def set_creating(self, stage: int = 1) -> None:
-        self.scenary = "CREATING"
+    def set_creating(self, stage: int = 1):
+        self.state = "CREATING"
         self.stage = stage
 
-    def set_using(self, stage: int = 1) -> None:
-        self.scenary = "USING"
+    def set_using(self, stage: int = 1):
+        self.state = "USING"
         self.stage = stage
 
-    def set_delete(self, stage: int = 1) -> None:
-        self.scenary = "DELETE"
+    def set_delete(self, stage: int = 1):
+        self.state = "DELETE"
         self.stage = stage
 
     def set_stage(self, value) -> None:
@@ -20,22 +20,22 @@ class States:
 
     def is_creating(self, stage=None) -> bool:
         if stage:
-            return self.scenary == "CREATING" and self.stage == stage
-        return self.scenary == "CREATING" and self.stage
+            return self.state == "CREATING" and self.stage == stage
+        return self.state == "CREATING" and self.stage
 
     def is_using(self, stage=None) -> bool:
         if stage:
-            return self.scenary == "USING" and self.stage == stage
-        return self.scenary == "USING" and self.stage
+            return self.state == "USING" and self.stage == stage
+        return self.state == "USING" and self.stage
 
     def is_delete(self, stage=None) -> bool:
         if stage:
-            return self.scenary == "DELETE" and self.stage == stage
-        return self.scenary == "DELETE" and self.stage
+            return self.state == "DELETE" and self.stage == stage
+        return self.state == "DELETE" and self.stage
 
     def get_stage(self):
         return self.stage
 
     def set_zero(self):
-        self.scenary = ""
+        self.state = "ZERO"
         self.stage = 0

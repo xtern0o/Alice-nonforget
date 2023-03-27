@@ -52,6 +52,9 @@ def main():
         }
         return jsonify(answer_response)
 
+    if (state.is_delete(1) or state.is_using(1)) and command == "назад":
+        state.set_zero()
+
     #  Начальное состояние Алисы
     if not (state.is_creating() or state.is_delete() or state.is_using()):
         if command == 'создать':
@@ -243,6 +246,12 @@ def main():
             "response": {
                 'text': get_error_phrase("not_found_error")["text"].format(command),
                 'tts': get_error_phrase("not_found_error")["tts"].format(command),
+                'buttons': [
+                    {
+                        "title": "назад",
+                        "hide": True
+                    }
+                ]
             },
             "session": session,
             "version": version
@@ -306,9 +315,7 @@ def main():
             return jsonify(answer_response)
 
         answer_response = {
-            "response": {
-                get_error_phrase()
-            },
+            "response": get_error_phrase(),
             "session": session,
             "version": version
         }
@@ -346,7 +353,13 @@ def main():
             {
                 "response": {
                     "text": get_error_phrase("not_found_error")["text"].format(command),
-                    "tts": get_error_phrase("not_found_error")["tts"].format(command)
+                    "tts": get_error_phrase("not_found_error")["tts"].format(command),
+                    "buttons": [
+                        {
+                            "title": "назад",
+                            "hide": True
+                        }
+                    ]
                 },
                 "session": session,
                 "version": version

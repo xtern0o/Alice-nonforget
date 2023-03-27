@@ -241,8 +241,8 @@ def main():
 
         answer_response = {
             "response": {
-                'text': 'Такой напоминалки у вас нет, повторите название или перейдите к списку ваших напоминалок',
-                'tts': 'Такой напоминалки у вас нет, повторите название или перейдите к списку ваших напоминалок',
+                'text': get_error_phrase("not_found_error")["text"].format(command),
+                'tts': get_error_phrase("not_found_error")["tts"].format(command),
             },
             "session": session,
             "version": version
@@ -253,8 +253,8 @@ def main():
         if check_line(command):
             answer_response = {
                 "response": {
-                    "text": f'Напоминалка {reminder_template[user_id]["title"]} удалена. Что вы хотите сделать теперь?',
-                    "tts": f'Напоминалка {reminder_template[user_id]["title"]} удалена. Что вы хотите сделать теперь?',
+                    "text": get_phrase(state.get_state(), "second_stage")["text"].format("text"),
+                    "tts": get_phrase(state.get_state(), "second_stage")["tts"].format("text"),
                     'buttons': [
                         {
                             "title": "Создать",
@@ -283,8 +283,8 @@ def main():
         if not check_line(command):
             answer_response = {
                 "response": {
-                    "text": f'Удаление напоминалки {reminder_template[user_id]["title"]} отменено. Что вы хотите сделать теперь?',
-                    "tts": f'Удаление напоминалки {reminder_template[user_id]["title"]} отменено. Что вы хотите сделать теперь?',
+                    "text": get_phrase(state.get_state(), "first_stage_disagree")["text"],
+                    "tts": get_phrase(state.get_state(), "first_stage_disagree")["tts"],
                     'buttons': [
                         {
                             "title": "Создать",
@@ -307,8 +307,7 @@ def main():
 
         answer_response = {
             "response": {
-                'text': 'Некорректный ввод. Повторите, пожалуйста',
-                'tts': 'Я вас не поняла, повторите еще раз',
+                get_error_phrase()
             },
             "session": session,
             "version": version
@@ -321,11 +320,12 @@ def main():
             reminder_template[user_id]["title"] = command
 
             # тут уже вывод всех айтемов пользователя
-            items = database.get_reminder_list(reminder_template[user_id]["title"])
+            title = reminder_template[user_id]["title"]
+            items = database.get_reminder_list(title)
             answer_response = {
                 "response": {
-                    "text": f'Напоминалка {reminder_template[user_id]["title"]}.'
-                            f' Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(title, ", ".join(items)),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(title, ", ".join(items)),
                     'buttons': [
                         {
                             "title": "Да",
@@ -335,7 +335,7 @@ def main():
                             "title": "Нет",
                             "hide": True
                         }
-                    ],
+                    ]
                 },
                 "session": session,
                 "version": version
@@ -344,10 +344,7 @@ def main():
             return jsonify(answer_response)
         return jsonify(
             {
-                "response": {
-                    "text": "Навык не найден. Повторите ввод",
-                    "tts": "Я не смогла найти навык. Повторите"
-                },
+                "response": get_error_phrase("not_found_error"),
                 "session": session,
                 "version": version
             }
@@ -359,7 +356,8 @@ def main():
             items = database.get_reminder_list(reminder_template[user_id]['title'])
             answer_response = {
                 "response": {
-                    "text": f'Хорошо, повторяю. Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    "text": get_phrase(state.get_state(), "second_stage")["text"].format(", ".join(items)),
+                    "tts": get_phrase(state.get_state(), "second_stage")["tts"].format(", ".join(items)),
                     'buttons': [
                         {
                             "title": "Да",
@@ -380,8 +378,8 @@ def main():
         elif not check_line(command):
             answer_response = {
                 "response": {
-                    "text": f'Надеюсь, вы ничего не забыли.'
-                            f' Вы хотите создать напоминалку или использовать/удалить существую?',
+                    "text": get_phrase(state.get_state(), "second_stage_disagree")["text"],
+                    "tts": get_phrase(state.get_state(), "second_state_disagree")["tts"]
                     'buttons': [
                         {
                             "title": "Создать",

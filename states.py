@@ -39,3 +39,6 @@ class States:
     def set_zero(self):
         self.state = "ZERO"
         self.stage = 0
+
+    def get_state(self):
+        return self.state

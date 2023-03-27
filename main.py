@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from phrases import get_error_phrase, get_phrase
 
 import settings
 from database import DataBase
@@ -29,9 +30,8 @@ def main():
 
         answer_response = {
             "response": {
-                'text': 'Вы запустили навык "незабывайка".'
-                        ' Вы хотите создать новый сценарий, запустить или удалить существующий?',
-                'tts': 'Приветствую вас в навыке "незабывайка". Хотите создать сценарий или применить существующий?',
+                'text': get_phrase(state.state, "zero")['text'],
+                'tts': get_phrase(state.state, "zero")['tts'],
                 'buttons': [
                     {
                         "title": "Создать",
@@ -55,45 +55,45 @@ def main():
     #  Начальное состояние Алисы
     if not (state.is_creating() or state.is_delete() or state.is_using()):
         if command == 'создать':
+            state.set_creating()
             answer_response = {
                 "response": {
-                    'text': 'Напишите название нового навыка',
-                    'tts': 'Произнесите название для нового навыка',
+                    'text': get_phrase(state.get_state(), "start_message")['text'],
+                    'tts': get_phrase(state.get_state(), "start_message")['tts']
                 },
                 "session": session,
                 "version": version
             }
-            state.set_creating()
             return jsonify(answer_response)
 
         if command == 'использовать':
+            state.set_using()
             answer_response = {
                 "response": {
-                    'text': 'Напишите название навыка',
-                    'tts': 'Произнесите название навыка',
+                    'text': get_phrase(state.get_state(), "start_message")['text'],
+                    'tts': get_phrase(state.get_state(), "start_message")['tts']
                 },
                 "session": session,
                 "version": version
             }
-            state.set_using()
             return jsonify(answer_response)
 
         if command == 'удалить':
+            state.set_delete()
             answer_response = {
                 "response": {
-                    'text': 'Напишите название навыка для удаления',
-                    'tts': 'Произнесите название навыка для удаления',
+                    'text': get_phrase(state.get_state(), "start_message")['text'],
+                    'tts': get_phrase(state.get_state(), "start_message")['tts']
                 },
                 "session": session,
                 "version": version
             }
-            state.set_delete()
             return jsonify(answer_response)
 
         answer_response = {
             "response": {
-                'text': 'Некорректная команда. Повторите ввод',
-                'tts': 'Я не распознала вашу команду. Повторите, пожалуйста',
+                'text': get_phrase(state.get_state(), "first_stage")['text'],
+                'tts': get_phrase(state.get_state(), "first_stage")['tts']
             },
             "session": session,
             "version": version
@@ -106,8 +106,8 @@ def main():
             reminder_template[user_id]["title"] = command
             answer_response = {
                 "response": {
-                    "text": f'Название сценария "{reminder_template[user_id]["title"]}"',
-                    "tts": f'Я вас правильно поняла? Название нового сценария "{reminder_template[user_id]["title"]}"',
+                    'text': get_phrase(state.get_state(), "first_stage")['text'].format(command),
+                    'tts': get_phrase(state.get_state(), "first_stage")['tts'].format(command),
                     "buttons": [
                         {
                             "title": "Да",
@@ -127,8 +127,8 @@ def main():
 
         answer_response = {
             "response": {
-                'text': 'Некорректный ввод. Повторите, пожалуйста',
-                'tts': 'Я вас не поняла, повторите еще раз',
+                'text': get_error_phrase()["text"],
+                'tts': get_error_phrase()["tts"],
             },
             "session": session,
             "version": version
@@ -139,9 +139,10 @@ def main():
         if check_line(command):
             answer_response = {
                 "response": {
-                    "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом '
-                            '"Всё"',
-                    "tts": 'Поняла. Теперь произнесите предметы по порядку. Закончите ключевым словом "Всё"'
+                    "text": get_phrase(state.get_state(),
+                                       "second_stage")["text"].format(reminder_template[user_id]["title"]),
+                    "tts": get_phrase(state.get_state(),
+                                       "second_stage")["tts"].format(reminder_template[user_id]["title"]),
                 },
                 "session": session,
                 "version": version
@@ -151,10 +152,7 @@ def main():
 
         if not check_line(command):
             answer_response = {
-                "response": {
-                    "text": 'Без бэ. Опвторите ввод названия',
-                    "tts": 'Да без бэ. Повторите название'
-                },
+                "response": get_phrase(state.get_state(), "first_stage_disagree"),
                 "session": session,
                 "version": version
             }
@@ -168,10 +166,7 @@ def main():
                 # TODO: some validation of item at this step
                 reminder_template[user_id]["reminder_list"].append(item)
                 answer_response = {
-                    "response": {
-                        "text": "Дальше",
-                        "tts": "Записала"
-                    },
+                    "response": get_phrase(state.get_state(), "third_stage_items"),
                     "session": session,
                     "version": version
                 }
@@ -182,10 +177,8 @@ def main():
                 state.set_stage(4)
                 answer_response = {
                     "response": {
-                        "text": f'Отлично. Сценарий под названием {reminder_template[user_id]["title"]} добавлен.'
-                                f' Ваши дальнейшие действия?',
-                        "tts": f'Отлично. Сценарий под названием {reminder_template[user_id]["title"]} добавлен.'
-                               f' Ваши дальнейшие действия?',
+                        "text": get_phrase(state.get_state(), "third_stage_finish")["text"],
+                        "tts": get_phrase(state.get_state(), "third_stage_finish")["tts"],
                         'buttons': [
                             {
                                 "title": "Создать",
@@ -207,20 +200,14 @@ def main():
                 state.set_zero()
                 return jsonify(answer_response)
             answer_response = {
-                "response": {
-                    "text": "Сценарий не может быть пустым. Введите хотя бы один предмет",
-                    "tts": "Внесите хотя бы что-то в сценарий"
-                },
+                "response": get_error_phrase("empty_error"),
                 "version": version,
                 "session": session
             }
             return jsonify(answer_response)
 
         answer_response = {
-            "response": {
-                "text": "Некорректный ввод",
-                "tts": "Я вас не поняла. Повторите"
-            },
+            "response": get_error_phrase(),
             "session": session,
             "version": version
         }
@@ -232,8 +219,8 @@ def main():
             reminder_template[user_id]["title"] = command
             answer_response = {
                 "response": {
-                    "text": f'Вы точно хотите удалить напоминалку "{reminder_template[user_id]["title"]}"?',
-                    "tts": f'Вы точно хотите удалить напоминалку "{reminder_template[user_id]["title"]}"?',
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(reminder_template[user_id]["title"]),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(reminder_template[user_id]["title"]),
                     "buttons": [
                         {
                             "title": "Да",

@@ -3,21 +3,14 @@ from flask import Flask, request, jsonify
 import settings
 from database import DataBase
 from states import States
+from validators import check_line
 
 app = Flask(__name__)
 
 state = States()
 database = DataBase(settings.MONGO_HOST, settings.MONGO_PORT)
 
-reminder_template = {'title': '', 'todo_list': [], 'user_id': ''}
-
-
-def zero_all():
-    global reminder_template
-    reminder_template['title'] = ''
-    reminder_template['todo_list'] = []
-    reminder_template['user_id'] = ''
-    state.set_zero()
+reminder_template = {}
 
 
 @app.route('/post', methods=['POST'])
@@ -31,9 +24,7 @@ def main():
 
     if session['new']:
         database.add_new_user(session['user']['user_id'])
-        reminder_template['title'] = ''
-        reminder_template['todo_list'] = []
-        reminder_template['user_id'] = session['user']['user_id']
+        reminder_template[session['user']['user_id']] = {"title": "", "reminder_list": []}
         state.set_zero()
 
         answer_response = {
@@ -112,11 +103,11 @@ def main():
     # Сценарий создания
     if state.is_creating(1):
         if command:
-            reminder_template['title'] = command
+            reminder_template[user_id]["title"] = command
             answer_response = {
                 "response": {
-                    "text": f'Название сценария "{reminder_template["title"]}"',
-                    "tts": f'Я вас правильно поняла? Название нового сценария "{reminder_template["title"]}"',
+                    "text": f'Название сценария "{reminder_template[user_id]["title"]}"',
+                    "tts": f'Я вас правильно поняла? Название нового сценария "{reminder_template[user_id]["title"]}"',
                     "buttons": [
                         {
                             "title": "Да",
@@ -145,7 +136,7 @@ def main():
         return jsonify(answer_response)
 
     if state.is_creating(2):
-        if command == 'да' or 'да' in command and 'нет' not in command:
+        if check_line(command):
             answer_response = {
                 "response": {
                     "text": 'Теперь вводите предметы по порядку. Закончить последовательность можно ключевым словом '
@@ -158,7 +149,7 @@ def main():
             state.set_stage(3)
             return jsonify(answer_response)
 
-        if command == 'нет' or 'нет' in command and 'да' not in command:
+        if not check_line(command):
             answer_response = {
                 "response": {
                     "text": 'Без бэ. Опвторите ввод названия',
@@ -175,7 +166,7 @@ def main():
             if command != 'всё':
                 item = command
                 # TODO: some validation of item at this step
-                reminder_template["todo_list"].append(item)
+                reminder_template[user_id]["reminder_list"].append(item)
                 answer_response = {
                     "response": {
                         "text": "Дальше",
@@ -186,33 +177,43 @@ def main():
                 }
                 return jsonify(answer_response)
 
-            database.add_reminder(reminder_template)
-            state.set_stage(4)
+            if reminder_template[user_id]["reminder_list"]:
+                database.add_reminder(user_id, reminder_template)
+                state.set_stage(4)
+                answer_response = {
+                    "response": {
+                        "text": f'Отлично. Сценарий под названием {reminder_template[user_id]["title"]} добавлен.'
+                                f' Ваши дальнейшие действия?',
+                        "tts": f'Отлично. Сценарий под названием {reminder_template[user_id]["title"]} добавлен.'
+                               f' Ваши дальнейшие действия?',
+                        'buttons': [
+                            {
+                                "title": "Создать",
+                                "hide": True
+                            },
+                            {
+                                "title": "Использовать",
+                                "hide": True
+                            },
+                            {
+                                "title": "Удалить",
+                                "hide": True
+                            }
+                        ],
+                    },
+                    "session": session,
+                    "version": version
+                }
+                state.set_zero()
+                return jsonify(answer_response)
             answer_response = {
                 "response": {
-                    "text": f'Отлично. Сценарий под названием {reminder_template["title"]} добавлен.'
-                            f' Ваши дальнейшие действия?',
-                    "tts": f'Отлично. Сценарий под названием {reminder_template["title"]} добавлен.'
-                           f' Ваши дальнейшие действия?',
-                    'buttons': [
-                        {
-                            "title": "Создать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Использовать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Удалить",
-                            "hide": True
-                        }
-                    ],
+                    "text": "Сценарий не может быть пустым. Введите хотя бы один предмет",
+                    "tts": "Внесите хотя бы что-то в сценарий"
                 },
-                "session": session,
-                "version": version
+                "version": version,
+                "session": session
             }
-            state.set_zero()
             return jsonify(answer_response)
 
         answer_response = {
@@ -228,11 +229,11 @@ def main():
     # Сценарий удаления
     if state.is_delete(1):
         if command in database.get_reminders_titles(user_id):
-            reminder_template['title'] = command
+            reminder_template[user_id]["title"] = command
             answer_response = {
                 "response": {
-                    "text": f'Вы точно хотите удалить напоминалку "{reminder_template["title"]}"?',
-                    "tts": f'Вы точно хотите удалить напоминалку "{reminder_template["title"]}"?',
+                    "text": f'Вы точно хотите удалить напоминалку "{reminder_template[user_id]["title"]}"?',
+                    "tts": f'Вы точно хотите удалить напоминалку "{reminder_template[user_id]["title"]}"?',
                     "buttons": [
                         {
                             "title": "Да",
@@ -262,11 +263,11 @@ def main():
         return jsonify(answer_response)
 
     if state.is_delete(2):
-        if command == 'да' or 'да' in command and 'нет' not in command:
+        if check_line(command):
             answer_response = {
                 "response": {
-                    "text": f'Напоминалка {reminder_template["title"]} удалена. Что вы хотите сделать теперь?',
-                    "tts": f'Напоминалка {reminder_template["title"]} удалена. Что вы хотите сделать теперь?',
+                    "text": f'Напоминалка {reminder_template[user_id]["title"]} удалена. Что вы хотите сделать теперь?',
+                    "tts": f'Напоминалка {reminder_template[user_id]["title"]} удалена. Что вы хотите сделать теперь?',
                     'buttons': [
                         {
                             "title": "Создать",
@@ -285,15 +286,18 @@ def main():
                 "session": session,
                 "version": version
             }
+
             database.delete_reminder(user_id, reminder_template["title"])
-            zero_all()
+
+            database.delete_reminder(user_id, reminder_template[user_id]["title"])
+            state.set_zero()
             return jsonify(answer_response)
 
-        if command == 'нет' or 'нет' in command and 'да' not in command:
+        if not check_line(command):
             answer_response = {
                 "response": {
-                    "text": f'Удаление напоминалки {reminder_template["title"]} отменено. Что вы хотите сделать теперь?',
-                    "tts": f'Удаление напоминалки {reminder_template["title"]} отменено. Что вы хотите сделать теперь?',
+                    "text": f'Удаление напоминалки {reminder_template[user_id]["title"]} отменено. Что вы хотите сделать теперь?',
+                    "tts": f'Удаление напоминалки {reminder_template[user_id]["title"]} отменено. Что вы хотите сделать теперь?',
                     'buttons': [
                         {
                             "title": "Создать",
@@ -312,7 +316,6 @@ def main():
                 "session": session,
                 "version": version
             }
-            zero_all()
             return jsonify(answer_response)
 
         answer_response = {
@@ -324,6 +327,93 @@ def main():
             "version": version
         }
         return jsonify(answer_response)
+
+    # тут обработка начального состояния, без доп. проверок.
+    if state.is_using(1):
+        if command in database.get_reminders_titles(user_id):
+            reminder_template[user_id]["title"] = command
+
+            # тут уже вывод всех айтемов пользователя
+            items = database.get_reminder_list(reminder_template[user_id]["title"])
+            answer_response = {
+                "response": {
+                    "text": f'Напоминалка {reminder_template[user_id]["title"]}.'
+                            f' Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    'buttons': [
+                        {
+                            "title": "Да",
+                            "hide": True
+                        },
+                        {
+                            "title": "Нет",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+            state.set_stage(2)
+            return jsonify(answer_response)
+        return jsonify(
+            {
+                "response": {
+                    "text": "Навык не найден. Повторите ввод",
+                    "tts": "Я не смогла найти навык. Повторите"
+                },
+                "session": session,
+                "version": version
+            }
+        )
+
+    # если пользователь решит повторить список айтемов, мб стоит сделать по-другому, не меняя стейж
+    if state.is_using(2):
+        if check_line(command):
+            items = database.get_reminder_list(reminder_template[user_id]['title'])
+            answer_response = {
+                "response": {
+                    "text": f'Хорошо, повторяю. Незабудьте взять: {", ".join(items)}. Мне повторить?',
+                    'buttons': [
+                        {
+                            "title": "Да",
+                            "hide": True
+                        },
+                        {
+                            "title": "Нет",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+            state.set_zero()
+            return jsonify(answer_response)
+
+        elif not check_line(command):
+            answer_response = {
+                "response": {
+                    "text": f'Надеюсь, вы ничего не забыли.'
+                            f' Вы хотите создать напоминалку или использовать/удалить существую?',
+                    'buttons': [
+                        {
+                            "title": "Создать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Использовать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Удалить",
+                            "hide": True
+                        }
+                    ],
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
 
 
 if __name__ == '__main__':

@@ -1,20 +1,11 @@
-from pprint import pprint
+name = {'для', 'начала', 'сперва', 'начнем', 'с', 'во', 'первых', 'во', 'вторых', 'пускай', 'далее', 'дальше', 'пускай', 'будет',
+        'ещё', 'возьмем', 'прежде', 'всего', 'кроме', 'того', 'наконец', 'первое', 'второе', 'далее следует', 'выбирем',
+        'следующий', 'пункт', 'также', 'в первую очередь', 'первым', 'делом', 'на', 'первом', 'месте', 'в том числе', 'далее',
+        'в', 'дополнениe', 'помимо', 'всего', 'отметим', 'безусловно', 'в целом', 'в', 'приоритете', 'самое', 'важное', 'учтем',
+        'упомянем'}
 
-import settings
-from database import DataBase
+s = set('ss       прежде всего  первым делом      собака         s'.split())
 
-database = DataBase(settings.MONGO_HOST, settings.MONGO_PORT)
+res = s.difference(name)
 
-# database.add_new_user("GOKDSKKFSOFKSEOPFKWEOFKSFPOWKE")
-#
-# reminder = {'user_id': 'GOKDSKKFSOFKSEOPFKWEOFKSFPOWKE', 'title': 'ПОЙТИ В ДОДО',
-#             'todo': ['pizza', 'susi', 'starter']}
-# database.add_reminder(reminder)
-#
-# reminder = {'user_id': 'GOKDSKKFSOFKSEOPFKWEOFKSFPOWKE', 'title': 'кофе купить',
-#             'todo': ['Вещи', 'рок', 'поп']}
-# database.add_reminder(reminder)
-
-pprint(database.get_users_collection())
-pprint(database.get_relations_collection())
-pprint(database.get_reminder_collection())
+print(res)

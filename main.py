@@ -44,6 +44,10 @@ def main():
                     {
                         "title": "Удалить",
                         "hide": True
+                    },
+                    {
+                        "title": "СТОП",
+                        "hide": False,
                     }
                 ],
             },
@@ -54,9 +58,32 @@ def main():
 
     if (state.is_delete(1) or state.is_using(1)) and command == "назад":
         state.set_zero()
+        answer_response = {
+            "response": {
+                "text": get_phrase(state.get_state(), "restart")["text"],
+                "tts": get_phrase(state.get_state(), "restart")["tts"],
+                'buttons': [
+                    {
+                        "title": "Создать",
+                        "hide": True
+                    },
+                    {
+                        "title": "Использовать",
+                        "hide": True
+                    },
+                    {
+                        "title": "Удалить",
+                        "hide": True
+                    }
+                ],
+            },
+            "session": session,
+            "version": version
+        }
+        return answer_response
 
     #  Начальное состояние Алисы
-    if not (state.is_creating() or state.is_delete() or state.is_using()):
+    if not state.is_creating() or state.is_delete():
         if command == 'создать':
             state.set_creating()
             answer_response = {
@@ -73,8 +100,8 @@ def main():
             state.set_using()
             answer_response = {
                 "response": {
-                    'text': get_phrase(state.get_state(), "start_message")['text'],
-                    'tts': get_phrase(state.get_state(), "start_message")['tts']
+                    'text': get_phrase(state.get_state(), "start_message")['text'].format(", ".join(database.get_reminders_titles(user_id))),
+                    'tts': get_phrase(state.get_state(), "start_message")['tts'].format(", ".join(database.get_reminders_titles(user_id)))
                 },
                 "session": session,
                 "version": version
@@ -325,14 +352,13 @@ def main():
     if state.is_using(1):
         if command in database.get_reminders_titles(user_id):
             reminder_template[user_id]["title"] = command
-
             # тут уже вывод всех айтемов пользователя
             title = reminder_template[user_id]["title"]
             items = database.get_reminder_list(title)
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(title, ", ".join(items)),
-                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(title, ", ".join(items)),
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(", ".join(items)),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(", ".join(items)),
                     'buttons': [
                         {
                             "title": "Да",
@@ -395,7 +421,7 @@ def main():
             answer_response = {
                 "response": {
                     "text": get_phrase(state.get_state(), "second_stage_disagree")["text"],
-                    "tts": get_phrase(state.get_state(), "second_state_disagree")["tts"],
+                    "tts": get_phrase(state.get_state(), "second_stage_disagree")["tts"],
                     'buttons': [
                         {
                             "title": "Создать",

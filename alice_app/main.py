@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import pymorphy2
 from flask import Flask, request, jsonify
 from phrases import get_error_phrase, get_phrase
@@ -23,8 +25,19 @@ def main():
     data = request.json
     session = data['session']
     version = data['version']
+    if 'user' not in session.keys():
+        answer_response = {
+            "response": {
+                'text': f"OK",
+                'tts': f"OK"
+            },
+            "session": session,
+            "version": version
+        }
+        return jsonify(answer_response)
     user_id = session['user']['user_id']
     command = data['request']['command']
+
 
     if command in ("стоп", "выход", "выйти", "пока"):
         state.set_exit()

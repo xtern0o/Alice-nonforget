@@ -76,8 +76,8 @@ def main():
                             "hide": True
                         },
                         {
-                            "title": "СТОП",
-                            "hide": False,
+                            "title": "Стоп",
+                            "hide": True,
                         }
                     ]
                 },
@@ -109,8 +109,8 @@ def main():
                         "hide": True
                     },
                     {
-                        "title": "СТОП",
-                        "hide": False,
+                        "title": "Стоп",
+                        "hide": True,
                     }
                 ],
             },
@@ -150,37 +150,50 @@ def main():
 
         if 'использовать' in command:
             reminder_from_user = command.split()
-            items = database.get_reminder_list(reminder_from_user[1])
-            reminder_template[user_id]['title'] = reminder_from_user[1]
-            reminder_template[user_id]['reminder_list'] = items
+            if len(reminder_from_user) != 1:
+                title = command.replace('использовать', '').replace('напоминалку', '').strip()
+                items = database.get_reminder_list(title)
+                reminder_template[user_id] = {}
+                reminder_template[user_id]['title'] = title
+                reminder_template[user_id]['reminder_list'] = items
 
-            answer_response = {
-                "response": {
-                    'text': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                    'tts':  f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?"
-                },
-                "buttons": [
-                    {
-                        "title": "Да",
-                        "hide": True
+                answer_response = {
+                    "response": {
+                        'text': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                        'tts': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                        'buttons': [
+                            {
+                                "title": "Да",
+                                "hide": True
+                            },
+                            {
+                                "title": "Нет",
+                                "hide": True
+                            }
+                        ],
                     },
-                    {
-                        "title": "Нет",
-                        "hide": True
-                    }
-                ],
-                "session": session,
-                "version": version
-            }
-            state.set_using()
-            return jsonify(answer_response)
+                    "session": session,
+                    "version": version
+                }
+                state.set_using()
+                return jsonify(answer_response)
+            else:
+                answer_response = {
+                    "response": {
+                        'text': f"Вы не назвали название напоминалки, которую хотите использовать",
+                        'tts': f"Вы не назвали название напоминалки, которую хотите использовать"
+                    },
+                    "session": session,
+                    "version": version
+                }
+                return jsonify(answer_response)
 
         if command == 'удалить':
             state.set_delete()
             answer_response = {
                 "response": {
-                    'text': get_phrase(state.get_state(), "start_message")['text'],
-                    'tts': get_phrase(state.get_state(), "start_message")['tts']
+                    'text': 'Назовите название напоминалки, которую вы хотите удалить',
+                    'tts': 'Назовите название напоминалки, которую вы хотите удалить'
                 },
 
                 "session": session,
@@ -190,18 +203,26 @@ def main():
 
         answer_response = {
             "response": {
-                'text': get_phrase(state.get_state(), "first_stage")['text'],
-                'tts': get_phrase(state.get_state(), "first_stage")['tts'],
-                "buttons": [
+                'text': get_phrase("ZERO", "zero")['text'],
+                'tts': get_phrase("ZERO", "zero")['tts'],
+                'buttons': [
                     {
-                        "title": "Да",
+                        "title": "Создать",
                         "hide": True
                     },
                     {
-                        "title": "Нет",
+                        "title": "Использовать",
                         "hide": True
+                    },
+                    {
+                        "title": "Удалить",
+                        "hide": True
+                    },
+                    {
+                        "title": "Стоп",
+                        "hide": True,
                     }
-                ]
+                ],
             },
             "session": session,
             "version": version
@@ -304,6 +325,7 @@ def main():
                 "version": version,
                 "session": session
             }
+            state.set_stage(10)
             return jsonify(answer_pesponse)
 
     # Сценарий удаления
@@ -312,10 +334,8 @@ def main():
             reminder_template[user_id]["title"] = command
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(
-                        reminder_template[user_id]["title"]),
-                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(
-                        reminder_template[user_id]["title"]),
+                    "text": f'Вы уверены что хотите удалить напоминалку {command}?',
+                    "tts": f'Вы уверены что хотите удалить напоминалку {command}?',
                     "buttons": [
                         {
                             "title": "Да",
@@ -348,8 +368,8 @@ def main():
         if check_line(command):
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "second_stage")["text"].format("text"),
-                    "tts": get_phrase(state.get_state(), "second_stage")["tts"].format("text"),
+                    "text": f'Напоминалка {reminder_template[user_id]["title"]} удалена',
+                    "tts": f'Напоминалка {reminder_template[user_id]["title"]} удалена',
                     'buttons': [
                         {
                             "title": "Создать",
@@ -364,8 +384,8 @@ def main():
                             "hide": True
                         },
                         {
-                            "title": "СТОП",
-                            "hide": False,
+                            "title": "Стоп",
+                            "hide": True,
                         }
                     ],
                 },
@@ -373,7 +393,6 @@ def main():
                 "version": version
             }
 
-            database.delete_reminder(user_id, reminder_template["title"])
             database.delete_reminder(user_id, reminder_template[user_id]["title"])
             state.set_zero()
             return jsonify(answer_response)

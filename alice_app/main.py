@@ -149,7 +149,7 @@ def main():
             return jsonify(answer_response)
 
         if 'использовать' in command:
-            reminder_from_user = command.split("использовать")
+            reminder_from_user = command.split()
             items = database.get_reminder_list(reminder_from_user[1])
             reminder_template[user_id]['title'] = reminder_from_user[1]
             reminder_template[user_id]['reminder_list'] = items

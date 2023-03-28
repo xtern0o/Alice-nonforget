@@ -1,7 +1,7 @@
 from json import loads
 from random import choice
 
-with open("phrases.json", mode="r", encoding="utf-8") as json_file:
+with open("alice_app/phrases.json", mode="r", encoding="utf-8") as json_file:
     f = json_file.read()
 PHRASES = loads(f)
 

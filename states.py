@@ -42,3 +42,12 @@ class States:
 
     def get_state(self):
         return self.state
+
+    def set_exit(self):
+        self.state = "EXIT"
+        self.stage = 1
+
+    def is_exit(self, stage=None) -> bool:
+        if stage:
+            return self.state == "EXIT" and self.stage == stage
+        return self.state == "USING" and self.stage

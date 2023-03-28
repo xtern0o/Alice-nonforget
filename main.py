@@ -56,6 +56,67 @@ def main():
         }
         return jsonify(answer_response)
 
+    if command in ("стоп", "выход", "выйти", "пока"):
+        state.set_exit()
+        answer_response = {
+            "response": {
+                "text": get_phrase("EXIT", "stop")["text"],
+                "tts": get_phrase("EXIT", "stop")["tts"],
+                "buttons": [
+                    {
+                        "title": "Да",
+                        "hide": True
+                    },
+                    {
+                        "title": "Нет",
+                        "hide": True
+                    }
+                ]
+            },
+            "session": session,
+            "version": version
+        }
+        state.set_stage(2)
+        return jsonify(answer_response)
+
+    if state.is_exit(2):
+        if command == "да":
+            answer_response = {
+                "response": get_phrase("EXIT", "bye"),
+                "session": session,
+                "version": version
+            }
+            return answer_response
+        if command == "нет":
+            answer_response = {
+                "response": {
+                    "text": get_phrase("EXIT", "cancel")["text"],
+                    "tts": get_phrase("EXIT", "cancel")["tts"],
+                    'buttons': [
+                        {
+                            "title": "Создать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Использовать",
+                            "hide": True
+                        },
+                        {
+                            "title": "Удалить",
+                            "hide": True
+                        },
+                        {
+                            "title": "СТОП",
+                            "hide": False,
+                        }
+                    ]
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
+
+
     if (state.is_delete(1) or state.is_using(1)) and command == "назад":
         state.set_zero()
         answer_response = {
@@ -80,10 +141,10 @@ def main():
             "session": session,
             "version": version
         }
-        return answer_response
+        return jsonify(answer_response)
 
     #  Начальное состояние Алисы
-    if not state.is_creating() or state.is_delete():
+    if not (state.is_creating() or state.is_delete() or state.is_using()):
         if command == 'создать':
             state.set_creating()
             answer_response = {
@@ -193,7 +254,6 @@ def main():
         if command:
             if command != 'всё':
                 item = command
-                # TODO: some validation of item at this step
                 reminder_template[user_id]["reminder_list"].append(item)
                 answer_response = {
                     "response": get_phrase(state.get_state(), "third_stage_items"),
@@ -352,13 +412,14 @@ def main():
     if state.is_using(1):
         if command in database.get_reminders_titles(user_id):
             reminder_template[user_id]["title"] = command
+
             # тут уже вывод всех айтемов пользователя
             title = reminder_template[user_id]["title"]
             items = database.get_reminder_list(title)
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(", ".join(items)),
-                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(", ".join(items)),
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(title, ", ".join(items)),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(title, ", ".join(items)),
                     'buttons': [
                         {
                             "title": "Да",

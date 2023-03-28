@@ -16,6 +16,7 @@ morph = pymorphy2.MorphAnalyzer(lang="ru")
 reminder_template = {}
 POS_LIST = ['COMP', 'ADVB', 'NPRO', 'PRED', 'CONJ', 'PRCL', 'INTJ']
 
+
 @app.route('/post', methods=['POST'])
 def main():
     global reminder_template
@@ -33,21 +34,7 @@ def main():
         answer_response = {
             "response": {
                 'text': get_phrase(state.state, "zero")['text'],
-                'tts': get_phrase(state.state, "zero")['tts'],
-                'buttons': [
-                    {
-                        "title": "Создать",
-                        "hide": True
-                    },
-                    {
-                        "title": "Использовать",
-                        "hide": True
-                    },
-                    {
-                        "title": "Удалить",
-                        "hide": True
-                    }
-                ],
+                'tts': get_phrase(state.state, "zero")['tts']
             },
             "session": session,
             "version": version
@@ -62,9 +49,19 @@ def main():
             state.set_creating()
             answer_response = {
                 "response": {
-                    'text': f"Создала напоминалку с названием {title_from_user[1]}. Всё верно?",
-                    'tts': f"Создала напоминалку с названием {title_from_user[1]}. Всё верно?"
+                    'text': get_phrase("CREATING", "start_message")["text"].format(title_from_user[1]),
+                    'tts': get_phrase("CREATING", "start_message")["tts"].format(title_from_user[1])
                 },
+                "buttons": [
+                    {
+                        "title": "Да",
+                        "hide": True
+                    },
+                    {
+                        "title": "Нет",
+                        "hide": True
+                    }
+                ],
                 "session": session,
                 "version": version
             }
@@ -73,14 +70,27 @@ def main():
 
         if 'использовать' in command:
             reminder_from_user = command.split("использовать")
+            check_title = database.get_reminders_titles(user_id)
+            if reminder_from_user[1] not in check_title:
+                answer_response = {
+                    "response": {
+                        "text": get_error_phrase("not_found_error")["text"].format(reminder_from_user[1]),
+                        "tts": get_error_phrase("not_found_error")["tts"].format(reminder_from_user[1]),
+                    },
+                    "session": session,
+                    "version": version,
+                    "end_session": True
+                }
+                return jsonify(answer_response)
+
             items = database.get_reminder_list(reminder_from_user[1])
             reminder_template[user_id]['title'] = reminder_from_user[1]
             reminder_template[user_id]['reminder_list'] = items
 
             answer_response = {
                 "response": {
-                    'text': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                    'tts':  f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?"
+                    'text': get_phrase("USING", "start_message")["text"].format(", ".join(items)),
+                    'tts': get_phrase("USING", "start_message")["tts"].format(", ".join(items))
                 },
                 "buttons": [
                     {
@@ -98,23 +108,29 @@ def main():
             state.set_using()
             return jsonify(answer_response)
 
-        if command == 'удалить':
+        if 'удалить' in command:
+            reminder_from_user = command.split("удалить")
+            check_title = database.get_reminders_titles(user_id)
+            if reminder_from_user[1] not in check_title:
+                answer_response = {
+                    "response": {
+                        "text": get_error_phrase("not_found_error")["text"].format(reminder_from_user[1]),
+                        "tts": get_error_phrase("not_found_error")["tts"].format(reminder_from_user[1]),
+                    },
+                    "session": session,
+                    "version": version,
+                    "end_session": True
+                }
+                return jsonify(answer_response)
+
+            reminder_template[user_id]['title'] = reminder_from_user[1]
             state.set_delete()
             answer_response = {
                 "response": {
-                    'text': get_phrase(state.get_state(), "start_message")['text'],
-                    'tts': get_phrase(state.get_state(), "start_message")['tts']
+                    'text': get_phrase("DELETE", "start_message")["text"].format(reminder_from_user[1]),
+                    'tts': get_phrase("DELETE", "start_message")["tts"].format(reminder_from_user[1])
                 },
 
-                "session": session,
-                "version": version
-            }
-            return jsonify(answer_response)
-
-        answer_response = {
-            "response": {
-                'text': get_phrase(state.get_state(), "first_stage")['text'],
-                'tts': get_phrase(state.get_state(), "first_stage")['tts'],
                 "buttons": [
                     {
                         "title": "Да",
@@ -124,7 +140,32 @@ def main():
                         "title": "Нет",
                         "hide": True
                     }
-                ]
+                ],
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
+
+        if "список напоминалок" in command:
+            text, tts = get_phrase("LIST", "not_exists")["text"], get_phrase("LIST", "not_exists")["tts"]
+            check_titles = database.get_reminders_titles(user_id)
+            if check_titles:
+                text, tts = get_phrase("LIST", "exists")["text"].format(", ".join(check_titles)), \
+                    get_phrase("LIST", "exists")["tts"].format(", ".join(check_titles))
+            answer_response = {
+                "response": {
+                    'text': text,
+                    'tts': tts
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
+
+        answer_response = {
+            "response": {
+                'text': get_error_phrase()['text'],
+                'tts': get_error_phrase()['tts']
             },
             "session": session,
             "version": version
@@ -136,8 +177,8 @@ def main():
         if check_line(command):
             answer_response = {
                 "response": {
-                    'text': "Теперь перечислите всё, что вы бы не хотели забыть.",
-                    'tts': "Теперь перечислите всё, что вы бы не хотели забыть.",
+                    'text': get_phrase(state.get_state(), "first_stage")["text"],
+                    'tts': get_phrase(state.get_state(), "first_stage")["tts"]
                 },
 
                 "session": session,
@@ -153,13 +194,13 @@ def main():
             database.add_reminder(user_id, reminder_template)
             answer_response = {
                 "response": {
-                    'text': "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
-                    'tts': "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
+                    'text': get_phrase(state.get_state(), "second_stage")["text"],
+                    'tts': get_phrase(state.get_state(), "second_stage")["tts"]
                 },
                 "session": session,
-                "version": version
+                "version": version,
+                "end_session": True
             }
-            state.set_zero()
             reminder_template.pop(user_id)
             return jsonify(answer_response)
 
@@ -175,68 +216,16 @@ def main():
 
     # Сценарий удаления
     if state.is_delete(1):
-        if command in database.get_reminders_titles(user_id):
-            reminder_template[user_id]["title"] = command
-            answer_response = {
-                "response": {
-                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(
-                        reminder_template[user_id]["title"]),
-                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(
-                        reminder_template[user_id]["title"]),
-                    "buttons": [
-                        {
-                            "title": "Да",
-                            "hide": True
-                        },
-                        {
-                            "title": "Нет",
-                            "hide": True
-                        }
-                    ]
-                },
-                "session": session,
-                "version": version
-            }
-
-            state.set_stage(2)
-            return jsonify(answer_response)
-
-        answer_response = {
-            "response": {
-                'text': get_error_phrase("not_found_error")["text"].format(command),
-                'tts': get_error_phrase("not_found_error")["tts"].format(command),
-            },
-            "session": session,
-            "version": version
-        }
-        return jsonify(answer_response)
-
-    if state.is_delete(2):
         if check_line(command):
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "second_stage")["text"].format("text"),
-                    "tts": get_phrase(state.get_state(), "second_stage")["tts"].format("text"),
-                    'buttons': [
-                        {
-                            "title": "Создать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Использовать",
-                            "hide": True
-                        },
-                        {
-                            "title": "Удалить",
-                            "hide": True
-                        }
-                    ],
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format("text"),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format("text"),
                 },
                 "session": session,
-                "version": version
+                "version": version,
+                "end_session": True
             }
-
-            database.delete_reminder(user_id, reminder_template["title"])
 
             database.delete_reminder(user_id, reminder_template[user_id]["title"])
             state.set_zero()
@@ -249,7 +238,8 @@ def main():
                     "tts": get_phrase(state.get_state(), "first_stage_disagree")["tts"],
                 },
                 "session": session,
-                "version": version
+                "version": version,
+                "end_session": True
             }
             return jsonify(answer_response)
 
@@ -258,7 +248,8 @@ def main():
                 get_error_phrase()
             },
             "session": session,
-            "version": version
+            "version": version,
+            "end_session": True
         }
         return jsonify(answer_response)
 
@@ -268,8 +259,8 @@ def main():
             items = reminder_template[user_id]['reminder_list']
             answer_response = {
                 "response": {
-                    "text": get_phrase(state.get_state(), "second_stage")["text"].format(", ".join(items)),
-                    "tts": get_phrase(state.get_state(), "second_stage")["tts"].format(", ".join(items)),
+                    "text": get_phrase(state.get_state(), "first_stage")["text"].format(", ".join(items)),
+                    "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(", ".join(items)),
                     'buttons': [
                         {
                             "title": "Да",
@@ -289,14 +280,24 @@ def main():
         elif not check_line(command):
             answer_response = {
                 "response": {
-                    "text": "Надеюсь, что вы ничего не забыли",
-                    "tts": "Надеюсь, что вы ничего не забыли",
+                    "text": get_phrase(state.get_state(), "first_stage_disagree")["text"],
+                    "tts": get_phrase(state.get_state(), "first_stage_disagree")["tts"]
                 },
                 "session": session,
-                "version": version
+                "version": version,
+                "end_session": True
             }
-            state.set_zero()
             return jsonify(answer_response)
+
+        answer_response = {
+            "response": {
+                get_error_phrase()
+            },
+            "session": session,
+            "version": version,
+            "end_session": True
+        }
+        return jsonify(answer_response)
 
 
 if __name__ == '__main__':

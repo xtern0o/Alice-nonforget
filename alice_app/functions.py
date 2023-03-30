@@ -12,3 +12,9 @@ def send_help_message(text, tts, session, version):
     }
 
     return jsonify(answer_response)
+
+
+def create_buttons(*args, **kwargs):
+    for i in args:
+        kwargs['response']['buttons'].append(i)
+    return kwargs

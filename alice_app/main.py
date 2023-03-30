@@ -5,7 +5,7 @@ from phrases import get_error_phrase, get_phrase
 import settings
 from database import DataBase
 from states import States
-from functions import send_help_message
+from functions import send_help_message, create_buttons
 from validators import check_line
 
 app = Flask(__name__)
@@ -43,20 +43,13 @@ def main():
             "response": {
                 "text": get_phrase("EXIT", "stop")["text"],
                 "tts": get_phrase("EXIT", "stop")["tts"],
-                "buttons": [
-                    {
-                        "title": "Да",
-                        "hide": True
-                    },
-                    {
-                        "title": "Нет",
-                        "hide": True
-                    }
-                ]
+                "buttons": []
             },
             "session": session,
             "version": version
         }
+        answer_response = create_buttons(*[{"title": "Да", "hide": True}, {"title": "Нет", "hide": True}],
+                                         **answer_response)
         state.set_stage(2)
         return jsonify(answer_response)
 

@@ -123,9 +123,9 @@ def main():
         }
         return jsonify(answer_response)
 
-    if command in ("помощь", "что ты умеешь", "какие есть команды", "что делать"):
+    if command in ("помощь", "что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп"):
         state.set_zero()
-        return send_help_message("test", "test", session, version)
+        return send_help_message(session, version)
     else:
         #  Начальное состояние Алисы
         if not (state.is_creating() or state.is_delete() or state.is_using()):
@@ -439,7 +439,7 @@ def main():
                 items = reminder_template[user_id]['reminder_list']
                 answer_response = {
                     "response": {
-                        "text": get_phrase(state.get_state(), "first_stage")["text"].format(", ".join(items)),
+                        "text": get_phrase(state.get_state(), "first_stage")["tts"].format(", ".join(items)),
                         "tts": get_phrase(state.get_state(), "first_stage")["tts"].format(", ".join(items)),
                         'buttons': [
                             {

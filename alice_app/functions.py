@@ -8,7 +8,7 @@ def send_help_message(session, version):
             "card": {
                 "type": "ItemsList",
                 "header": {
-                    "text": "Помощь:",
+                    "text": "Список команд",
                 },
                 "items": [
                     {

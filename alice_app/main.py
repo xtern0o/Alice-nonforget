@@ -1,11 +1,11 @@
 import pymorphy2
 from flask import Flask, request, jsonify
-from phrases import get_error_phrase, get_phrase
 
 import settings
 from database import DataBase
-from states import States
 from functions import send_help_message, create_buttons
+from phrases import get_error_phrase, get_phrase
+from states import States
 from validators import check_line
 
 app = Flask(__name__)
@@ -466,7 +466,6 @@ def main():
 
         if state.is_using(10):
             pass
-
 
 
 if __name__ == '__main__':

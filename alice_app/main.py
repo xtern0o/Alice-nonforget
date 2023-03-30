@@ -114,7 +114,7 @@ def main():
                     },
                     {
                         "title": "Стоп",
-                        "hide": True,
+                        "hide": False,
                     }
                 ],
             },
@@ -123,7 +123,7 @@ def main():
         }
         return jsonify(answer_response)
 
-    if command in ("помощь", "что ты умеешь"):
+    if command in ("помощь", "что ты умеешь", "какие есть команды", "что делать"):
         state.set_zero()
         return send_help_message("test", "test", session, version)
     else:
@@ -156,6 +156,15 @@ def main():
                 state.set_creating()
                 return jsonify(answer_response)
 
+            if command == 'использовать':
+                state.set_using(10)
+                answer_response = {
+                    "response": get_phrase(state.get_state(), "qwertyuiop"),
+                    "session": session,
+                    "version": version
+                }
+                return jsonify(answer_response)
+
             if 'использовать' in command:
                 reminder_from_user = command.split()
                 if len(reminder_from_user) != 1:
@@ -185,16 +194,15 @@ def main():
                     }
                     state.set_using()
                     return jsonify(answer_response)
-                else:
-                    answer_response = {
-                        "response": {
-                            'text': f"Вы не назвали название напоминалки, которую хотите использовать",
-                            'tts': f"Вы не назвали название напоминалки, которую хотите использовать"
-                        },
-                        "session": session,
-                        "version": version
-                    }
-                    return jsonify(answer_response)
+                answer_response = {
+                    "response": {
+                        'text': f"Вы не назвали название напоминалки, которую хотите использовать",
+                        'tts': f"Вы не назвали название напоминалки, которую хотите использовать"
+                    },
+                    "session": session,
+                    "version": version
+                }
+                return jsonify(answer_response)
 
             if command == 'удалить':
                 state.set_delete()
@@ -228,7 +236,7 @@ def main():
                         },
                         {
                             "title": "Стоп",
-                            "hide": True,
+                            "hide": False,
                         }
                     ],
                 },
@@ -393,7 +401,7 @@ def main():
                             },
                             {
                                 "title": "Стоп",
-                                "hide": True,
+                                "hide": False,
                             }
                         ],
                     },
@@ -448,15 +456,17 @@ def main():
                     "version": version
                 }
                 return jsonify(answer_response)
+            answer_response = {
+                "response": get_phrase(state.get_state(), "first_stage_disagree"),
+                "session": session,
+                "version": version
+            }
+            state.set_zero()
+            return jsonify(answer_response)
 
-            elif not check_line(command):
-                answer_response = {
-                    "response": get_phrase(state.get_state(), "first_stage_disagree"),
-                    "session": session,
-                    "version": version
-                }
-                state.set_zero()
-                return jsonify(answer_response)
+        if state.is_using(10):
+            pass
+
 
 
 if __name__ == '__main__':

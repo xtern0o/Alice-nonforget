@@ -1,3 +1,3 @@
-MONGO_HOST = "127.0.0.1"
+MONGO_HOST = "mongodb+srv://sayolight:salososalo@sayolight.pw2k2cf.mongodb.net/test"
 MONGO_PORT = 27017
-MONGO_DB = 'nonforget_db'
+MONGO_DB = 'nonforget'

@@ -69,24 +69,28 @@ class Database:
         self.con.commit()
 
     def get_reminder_items(self, user_id, title):
-        return self.con.execute("""
-        SELECT items FROM reminders WHERE owner_id = ? AND title = ?
-        """, (user_id, title)).fetchone()[0]
+        try:
+            return self.con.execute("""
+            SELECT items FROM reminders WHERE owner_id = ? AND title = ?
+            """, (user_id, title)).fetchone()[0]
+        except Exception:
+            return False
 
     def delete_reminder(self, user_id, title):
         check = self.con.execute("""
-        SELECT * FROM reminders WHERE owner_id = user_id AND title = ?
-        """, (user_id, title)).fetchone()[0]
+        SELECT * FROM reminders WHERE owner_id = ? AND title = ?
+        """, (user_id, title)).fetchone()
         if check:
             self.con.execute("""
             DELETE FROM reminders WHERE owner_id = ? AND title = ?
             """, (user_id, title))
+            self.con.commit()
             return True
         return False
 
     def get_reminders_with_owner(self, user_id):
         a = self.con.execute("""
-        SELECT * FROM reminders WHERE user_id = ?
+        SELECT * FROM reminders WHERE owner_id = ?
         """, (user_id,)).fetchall()
         dct = list(map(lambda n: {
             "id": n[0],

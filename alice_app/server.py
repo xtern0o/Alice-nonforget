@@ -14,7 +14,6 @@ database = Database("db.sqlite")
 
 morph = pymorphy2.MorphAnalyzer(lang="ru")
 reminder_template = {}
-POS_LIST = ['COMP', 'ADVB', 'NPRO', 'PRED', 'CONJ', 'PRCL', 'INTJ']
 
 states_dict = {}
 
@@ -234,7 +233,7 @@ def main():
 
         if states_dict[user_id].is_creating(2):
             if command:
-                words_of_user = set([word for word in command.split() if morph.parse(word)[0].tag.POS not in POS_LIST])
+                words_of_user = set([word for word in command.split() if morph.parse(word)[0].tag.POS == 'NOUN'])
                 [reminder_template[user_id]["reminder_list"].append(word) for word in words_of_user]
                 database.add_reminder(user_id, reminder_template)
                 answer_response = {

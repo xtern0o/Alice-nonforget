@@ -110,6 +110,7 @@ def main():
     if command in ("помощь", "что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп"):
         states_dict[user_id].set_zero()
         return send_help_message(session, version)
+
     else:
         #  Начальное состояние Алисы
         if not (states_dict[user_id].is_creating() or states_dict[user_id].is_delete() or
@@ -117,6 +118,7 @@ def main():
             if command == 'создать':
                 states_dict[user_id].set_creating(10)
                 answer_response = {
+
                     "response": {
                         'text': get_phrase(states_dict[user_id].get_state(), "start_message_alt")['text'],
                         'tts': get_phrase(states_dict[user_id].get_state(), "start_message_alt")['tts']
@@ -127,23 +129,27 @@ def main():
                 return jsonify(answer_response)
 
             if 'создать' in command:
-                title_from_user = command.split('создать')
-                reminder_template[user_id]['title'] = title_from_user[1]
-                states_dict[user_id].set_creating()
-                answer_response = {
-                    "response": {
-                        'text': f"Создала напоминалку с названием {title_from_user[1]}. Всё верно?",
-                        'tts': f"Создала напоминалку с названием {title_from_user[1]}. Всё верно?",
-                        'buttons': []
-                    },
-                    "session": session,
-                    "version": version
-                }
-                answer_response = create_buttons(*[{"title": "Да", "hide": True},
-                                                   {"title": "Нет", "hide": True}],
-                                                 **answer_response)
-                states_dict[user_id].set_creating()
-                return jsonify(answer_response)
+                reminder_from_user = command.split()
+                if len(reminder_from_user) != 1:
+                    if 'напоминалк' in command:
+                        index = str(command).find('напоминалк')
+                        title = command[index + len('напоминалка'):].strip()
+                        reminder_template[user_id]["title"] = title
+                        states_dict[user_id].set_creating()
+                        answer_response = {
+                            "response": {
+                                'text': f"Создала напоминалку с названием {title}. Всё верно?",
+                                'tts': f"Создала напоминалку с названием {title}. Всё верно?",
+                                'buttons': []
+                            },
+                            "session": session,
+                            "version": version
+                        }
+                        answer_response = create_buttons(*[{"title": "Да", "hide": True},
+                                                           {"title": "Нет", "hide": True}],
+                                                         **answer_response)
+                        states_dict[user_id].set_creating()
+                        return jsonify(answer_response)
 
             if command == 'использовать':
                 states_dict[user_id].set_using(10)
@@ -157,30 +163,45 @@ def main():
             if 'использовать' in command:
                 reminder_from_user = command.split()
                 if len(reminder_from_user) != 1:
-                    title = command.replace('использовать', '').replace('напоминалку', '').replace('хочу', '').strip()
-                    items = database.get_reminder_items(user_id, title).split(";")
-                    reminder_template[user_id] = {}
-                    reminder_template[user_id]['title'] = title
-                    reminder_template[user_id]['reminder_list'] = items
+                    if 'напоминалк' in command:
+                        index = str(command).find('напоминалк')
+                        title = command[index + len('напоминалка'):].strip()
+                        items = database.get_reminder_items(user_id, title)
+                        if items:
+                            items = items.split(";")
+                            reminder_template[user_id] = {}
+                            reminder_template[user_id]['title'] = title
+                            reminder_template[user_id]['reminder_list'] = items
 
-                    answer_response = {
-                        "response": {
-                            'text': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                            'tts': f"Напоминалка {reminder_from_user[1]}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                            'buttons': []
-                        },
-                        "session": session,
-                        "version": version
-                    }
-                    answer_response = create_buttons(*[{"title": "Да", "hide": True},
-                                                       {"title": "Нет", "hide": True}],
-                                                     **answer_response)
-                    states_dict[user_id].set_using()
-                    return jsonify(answer_response)
+                            answer_response = {
+                                "response": {
+                                    'text': f"Напоминалка {reminder_template[user_id]['title']}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                                    'tts': f"Напоминалка {reminder_template[user_id]['title']}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                                    'buttons': []
+                                },
+                                "session": session,
+                                "version": version
+                            }
+                            answer_response = create_buttons(*[{"title": "Да", "hide": True},
+                                                               {"title": "Нет", "hide": True}],
+                                                             **answer_response)
+                            states_dict[user_id].set_using()
+                            return jsonify(answer_response)
+                        else:
+                            answer_response = {
+                                "response": {
+                                    'text': f"Такой напоминалки не существует",
+                                    'tts': f"Такой напоминалки не существует"
+                                },
+                                "session": session,
+                                "version": version
+                            }
+                            return jsonify(answer_response)
+
                 answer_response = {
                     "response": {
-                        'text': f"Вы не назвали название напоминалки, которую хотите использовать",
-                        'tts': f"Вы не назвали название напоминалки, которую хотите использовать"
+                        'text': f"Вы не назвали напоминалку, которую хотите использовать",
+                        'tts': f"Вы не назвали напоминалку, которую хотите использовать"
                     },
                     "session": session,
                     "version": version
@@ -199,6 +220,29 @@ def main():
                     "version": version
                 }
                 return jsonify(answer_response)
+
+            if "удалить" in command:
+                reminder_from_user = command.split()
+                if len(reminder_from_user) != 1:
+                    if 'напоминалк' in command:
+                        index = str(command).find('напоминалк')
+                        title = command[index + len('напоминалка'):].strip()
+                        reminder_template[user_id]["title"] = title
+                        states_dict[user_id].set_creating()
+                        answer_response = {
+                            "response": {
+                                'text': f"Мне удалить напоминалку с названием {title}?",
+                                'tts': f"Мне удалить напоминалку с названием {title}?",
+                                'buttons': []
+                            },
+                            "session": session,
+                            "version": version
+                        }
+                        answer_response = create_buttons(*[{"title": "Да", "hide": True},
+                                                           {"title": "Нет", "hide": True}],
+                                                         **answer_response)
+                        states_dict[user_id].set_creating()
+                        return jsonify(answer_response)
 
             answer_response = {
                 "response": {
@@ -304,7 +348,7 @@ def main():
                 states_dict[user_id].set_stage(2)
                 return jsonify(answer_response)
             if command == "нет":
-                answer_pesponse = {
+                answer_response = {
                     "response": {
                         "text": "Хорошо, повторите ввод",
                         "tts": "Поняла, повторите название"
@@ -393,7 +437,7 @@ def main():
 
         # если пользователь решит повторить список айтемов, мб стоит сделать по-другому, не меняя стейж
         if states_dict[user_id].is_using(1):
-            if check_line(command):
+            if command == "да" or command == "хочу":
                 items = reminder_template[user_id]['reminder_list']
                 answer_response = {
                     "response": {

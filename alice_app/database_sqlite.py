@@ -63,10 +63,19 @@ class Database:
     def add_reminder(self, user_id: str, dct_: dict):
         title = dct_[user_id]["title"]
         items = "; ".join(dct_[user_id]["reminder_list"])
-        self.con.execute("""
-        INSERT INTO reminders (owner_id, title, items) VALUES(?, ? ,?) 
-        """, (user_id, title, items))
-        self.con.commit()
+        data = self.con.execute("""
+        SELECT * FROM reminders WHERE owner_id = ? AND title = ?
+        """, (user_id, title)).fetchall()
+        if not data:
+            self.con.execute("""
+            INSERT INTO reminders (owner_id, title, items) VALUES(?, ? ,?) 
+            """, (user_id, title, items))
+            self.con.commit()
+        else:
+            self.con.execute("""
+            UPDATE reminders SET owner_id = ?, title = ?, items = ? WHERE owner_id = ? AND title = ?
+            """, (user_id, title, items, user_id, title))
+            self.con.commit()
 
     def get_reminder_items(self, user_id, title):
         try:

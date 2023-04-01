@@ -107,9 +107,20 @@ def main():
                                                ], **answer_response)
             return jsonify(answer_response)
 
-    if command in ("помощь", "что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп"):
+    if command in ("что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп"):
         states_dict[user_id].set_zero()
         return send_help_message(session, version)
+    if command == "помощь":
+        answer_response = {
+            "response": {
+                'text': get_phrase("ZERO", "zero")['text'],
+                'tts': get_phrase("ZERO", "zero")['tts']
+            },
+            "session": session,
+            "version": version
+        }
+
+        return jsonify(answer_response)
 
     else:
         #  Начальное состояние Алисы
@@ -336,7 +347,7 @@ def main():
             return jsonify(answer_response)
 
         if states_dict[user_id].is_creating(11):
-            if command == "да":
+            if "да" in command or "хочу" in command:
                 answer_response = {
                     "response": {
                         'text': "Теперь перечислите всё, что вы бы не хотели забыть.",
@@ -347,7 +358,7 @@ def main():
                 }
                 states_dict[user_id].set_stage(2)
                 return jsonify(answer_response)
-            if command == "нет":
+            else:
                 answer_response = {
                     "response": {
                         "text": "Хорошо, повторите ввод",

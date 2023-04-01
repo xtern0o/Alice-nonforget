@@ -241,7 +241,7 @@ def main():
                         answer_response = create_buttons(*[{"title": "Да", "hide": True},
                                                            {"title": "Нет", "hide": True}],
                                                          **answer_response)
-                        states_dict[user_id].set_creating()
+                        states_dict[user_id].set_delete(10)
                         return jsonify(answer_response)
 
             answer_response = {
@@ -409,6 +409,46 @@ def main():
                 states_dict[user_id].set_zero()
                 return jsonify(answer_response)
 
+        if states_dict[user_id].is_delete(10):
+            if "да" in command or "хочу" in command:
+                answer_response = {
+                    "response": {
+                        "text": f'Напоминалка {reminder_template[user_id]["title"]} удалена',
+                        "tts": f'Напоминалка {reminder_template[user_id]["title"]} удалена',
+                        'buttons': []
+                    },
+                    "session": session,
+                    "version": version
+                }
+                answer_response = create_buttons(*[{"title": "Создать", "hide": True},
+                                                   {"title": "Использовать", "hide": True},
+                                                   {"title": "Удалить", "hide": True},
+                                                   {"title": "Стоп", "hide": False, }
+                                                   ], **answer_response)
+
+                database.delete_reminder(user_id, reminder_template[user_id]["title"])
+                states_dict[user_id].set_zero()
+                return jsonify(answer_response)
+            else:
+                answer_response = {
+                    "response": {
+                        "text": f'Отмена удаления',
+                        "tts": f'Отмена удаления',
+                        'buttons': []
+                    },
+                    "session": session,
+                    "version": version
+                }
+                answer_response = create_buttons(*[{"title": "Создать", "hide": True},
+                                                   {"title": "Использовать", "hide": True},
+                                                   {"title": "Удалить", "hide": True},
+                                                   {"title": "Стоп", "hide": False, }
+                                                   ], **answer_response)
+
+                database.delete_reminder(user_id, reminder_template[user_id]["title"])
+                states_dict[user_id].set_zero()
+                return jsonify(answer_response)
+
             if not check_line(command):
                 answer_response = {
                     "response": {
@@ -424,6 +464,7 @@ def main():
                                                    {"title": "Удалить", "hide": True},
                                                    {"title": "Стоп", "hide": False, }
                                                    ], **answer_response)
+                states_dict[user_id].set_zero()
                 return jsonify(answer_response)
 
             answer_response = {
@@ -437,7 +478,7 @@ def main():
 
         # если пользователь решит повторить список айтемов, мб стоит сделать по-другому, не меняя стейж
         if states_dict[user_id].is_using(1):
-            if command == "да" or command == "хочу":
+            if "да" in command or "хочу" in command:
                 items = reminder_template[user_id]['reminder_list']
                 answer_response = {
                     "response": {

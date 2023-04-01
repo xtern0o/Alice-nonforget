@@ -5,17 +5,18 @@ from database_sqlite import Database
 from functions import send_help_message, create_buttons
 from phrases import get_error_phrase, get_phrase
 from states import States
-from validators import check_line
+from validators import check_line, words_in_string
+from cliche import ADDITION_WORDS
 
 app = Flask(__name__)
 
-state = States()
 database = Database("db.sqlite")
 
 morph = pymorphy2.MorphAnalyzer(lang="ru")
-reminder_template = {}
 
+state = States()
 states_dict = {}
+reminder_template = {}
 
 database.create_database()
 
@@ -62,7 +63,8 @@ def main():
         database.add_new_user(user_id)
         states_dict[user_id] = States()
 
-        reminder_template[session['user']['user_id']] = {"title": "", "reminder_list": []}
+        reminder_template[user_id] = {"title": "", "reminder_list": []}
+        print(user_id)
 
         answer_response = {
             "response": {
@@ -186,8 +188,10 @@ def main():
 
                             answer_response = {
                                 "response": {
-                                    'text': f"Напоминалка {reminder_template[user_id]['title']}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                                    'tts': f"Напоминалка {reminder_template[user_id]['title']}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                                    'text': f"Напоминалка {reminder_template[user_id]['title']}."
+                                            f" Не забудьте: {', '.join(items)}. Мне повторить?",
+                                    'tts': f"Напоминалка {reminder_template[user_id]['title']}."
+                                           f" Не забудьте: {', '.join(items)}. Мне повторить?",
                                     'buttons': []
                                 },
                                 "session": session,
@@ -198,16 +202,16 @@ def main():
                                                              **answer_response)
                             states_dict[user_id].set_using()
                             return jsonify(answer_response)
-                        else:
-                            answer_response = {
-                                "response": {
-                                    'text': f"Такой напоминалки не существует",
-                                    'tts': f"Такой напоминалки не существует"
-                                },
-                                "session": session,
-                                "version": version
-                            }
-                            return jsonify(answer_response)
+
+                        answer_response = {
+                            "response": {
+                                'text': f"Такой напоминалки не существует",
+                                'tts': f"Такой напоминалки не существует"
+                            },
+                            "session": session,
+                            "version": version
+                        }
+                        return jsonify(answer_response)
 
                 answer_response = {
                     "response": {
@@ -279,18 +283,48 @@ def main():
                         'text': "Теперь перечислите всё, что вы бы не хотели забыть.",
                         'tts': "Теперь перечислите всё, что вы бы не хотели забыть.",
                     },
-
                     "session": session,
                     "version": version
                 }
                 states_dict[user_id].set_stage(2)
                 return jsonify(answer_response)
+            answer_response = {
+                "response": {
+                    'text': get_error_phrase()["text"],
+                    'tts': get_error_phrase()["tts"],
+                },
+                "session": session,
+                "version": version
+            }
+            return jsonify(answer_response)
 
         if states_dict[user_id].is_creating(2):
             if command:
-                words_of_user = set([word for word in command.split() if morph.parse(word)[0].tag.POS == 'NOUN'])
-                [reminder_template[user_id]["reminder_list"].append(word) for word in words_of_user]
+                nouns = set([word for word in command.split() if morph.parse(word)[0].tag.POS == 'NOUN'])
+                [reminder_template[user_id]["reminder_list"].append(morph.parse(word)[0].normal_form) for word in nouns]
+                answer_response = {
+                    "response": get_phrase(states_dict[user_id].get_state(), "first_stage_addition"),
+                    "session": session,
+                    "version": version
+                }
+                states_dict[user_id].set_stage(3)
+                return jsonify(answer_response)
+
+        if states_dict[user_id].is_creating(3):
+            if cliche_word := words_in_string(ADDITION_WORDS, command):
+                words = command[command.index(cliche_word) + len(cliche_word):]
+                nouns = set([word for word in words.split() if morph.parse(word)[0].tag.POS == 'NOUN'])
+                [reminder_template[user_id]["reminder_list"].append(morph.parse(word)[0].normal_form) for word in nouns]
+                answer_response = {
+                    "response": get_phrase(states_dict[user_id].get_state(), "first_stage_second_addition"),
+                    "session": session,
+                    "version": version
+                }
+                return jsonify(answer_response)
+            if words_in_string(["все", "хватит"], command):
+                states_dict[user_id].set_zero()
                 database.add_reminder(user_id, reminder_template)
+                reminder_template.pop(user_id)
                 answer_response = {
                     "response": {
                         'text': "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
@@ -305,10 +339,7 @@ def main():
                                                    {"title": "Удалить", "hide": True},
                                                    {"title": "Стоп", "hide": False, }
                                                    ], **answer_response)
-                states_dict[user_id].set_zero()
-                reminder_template.pop(user_id)
                 return jsonify(answer_response)
-
             answer_response = {
                 "response": {
                     'text': get_error_phrase()["text"],
@@ -440,7 +471,7 @@ def main():
                 database.delete_reminder(user_id, reminder_template[user_id]["title"])
                 states_dict[user_id].set_zero()
                 return jsonify(answer_response)
-            else:
+            if "нет" in command or "не хочу" in command:
                 answer_response = {
                     "response": {
                         "text": f'Отмена удаления',
@@ -491,12 +522,13 @@ def main():
         if states_dict[user_id].is_using(1):
             if "да" in command or "хочу" in command:
                 items = reminder_template[user_id]['reminder_list']
+                formatted_items = list(map(lambda word: morph.parse(word)[0].inflect({'accs'}).word, items))
                 answer_response = {
                     "response": {
                         "text": get_phrase(states_dict[user_id].get_state(), "first_stage")["tts"].format(
-                            ", ".join(items)),
+                            ", ".join(formatted_items)),
                         "tts": get_phrase(states_dict[user_id].get_state(), "first_stage")["tts"].format(
-                            ", ".join(items)),
+                            ", ".join(formatted_items)),
                         'buttons': []
                     },
                     "session": session,
@@ -549,10 +581,12 @@ def main():
             reminder_template[user_id]['title'] = title
             reminder_template[user_id]['reminder_list'] = items
 
+            formatted_items = list(map(lambda word: morph.parse(word)[0].inflect({'accs'}).word, items))
+
             answer_response = {
                 "response": {
-                    'text': f"Напоминалка {reminder_from_user[0]}. Не забудьте: {', '.join(items)}. Мне повторить?",
-                    'tts': f"Напоминалка {reminder_from_user[0]}. Не забудьте: {', '.join(items)}. Мне повторить?",
+                    'text': f"Напоминалка {reminder_from_user[0]}. Не забудьте {', '.join(formatted_items)}. Мне повторить?",
+                    'tts': f"Напоминалка {reminder_from_user[0]}. Не забудьте {', '.join(formatted_items)}. Мне повторить?",
                     'buttons': []
                 },
                 "session": session,

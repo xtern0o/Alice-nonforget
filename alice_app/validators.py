@@ -7,3 +7,10 @@ def check_line(line):
                 return False
         return True
     return True
+
+
+def words_in_string(words: list, s: str) -> str:
+    for word in words:
+        if word in s:
+            return word
+    return ""

@@ -357,7 +357,7 @@ def main():
                     "session": session
                 }
                 states_dict[user_id].set_stage(10)
-                return jsonify(answer_pesponse)
+                return jsonify(answer_response)
 
         # Сценарий удаления
         if states_dict[user_id].is_delete(1):

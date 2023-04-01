@@ -19,7 +19,7 @@ class Database:
         CREATE TABLE IF NOT EXISTS reminders
         (id INTEGER PRIMARY KEY AUTOINCREMENT,
         owner_id VARCHAR,
-        title VARCHAR UNIQUE,
+        title VARCHAR,
         items VARCHAR);
         """)
         self.con.commit()

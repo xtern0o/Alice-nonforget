@@ -332,7 +332,7 @@ def main():
                     "version": version
                 }
                 return jsonify(answer_response)
-            if words_in_string(["все", "хватит"], command):
+            if words_in_string(["все", "хватит", "всё"], command):
                 states_dict[user_id].set_zero()
                 database.add_reminder(user_id, reminder_template)
                 reminder_template.pop(user_id)

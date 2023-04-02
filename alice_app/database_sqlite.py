@@ -108,3 +108,9 @@ class Database:
             "items": n[3]
         }, a))
         return dct
+
+    def does_reminder_exists(self, user_id, title):
+        data = self.con.execute("""
+        SELECT title FROM reminders WHERE owner_id = ? AND title = ?
+        """, (user_id, title)).fetchall()
+        return not bool(data)

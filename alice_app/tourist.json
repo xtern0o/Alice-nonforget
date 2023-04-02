@@ -75,14 +75,14 @@
         "tts": "Что-то еще?",
         "buttons": [
           {
-            "title": "Всё",
+            "title": "Все",
             "hide": true
           }
         ]
       },
       "second_stage": {
         "text": "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
-        "tts": "<speaker audio=\"dialogs-upload/2e0bca31-f3df-4c16-8c00-c84b1f447b85/07a85914-e16c-454f-888d-43baa5fbe1ea.opus\">"
+        "tts": "<speaker audio=\"dialogs-upload/1bdbfde6-622e-402a-a4ed-debcf92d6854/06852eea-ea27-4123-899f-ce346ef920dd.opus\">"
       }
     },
     "USING": {

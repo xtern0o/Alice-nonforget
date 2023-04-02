@@ -147,6 +147,17 @@ def main():
                     if 'напоминалк' in command:
                         index = str(command).find('напоминалк')
                         title = command[index + len('напоминалка'):].strip()
+                        if database.does_reminder_exists(user_id, title):
+                            answer_response = {
+                                "response": {
+                                    "text": "У вас уже есть напоминалка с таким названием. Придумайте новое",
+                                    "tts": "У вас уже есть напоминалка с таким названием. Придумайте новое"
+                                },
+                                "session": session,
+                                "version": version
+                            }
+                            return answer_response
+
                         reminder_template[user_id]["title"] = title
                         states_dict[user_id].set_creating()
                         answer_response = {
@@ -328,7 +339,7 @@ def main():
                 answer_response = {
                     "response": {
                         'text': "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
-                        'tts': "Отлично! Теперь вы можете использовать напоминалку когда захотите.",
+                        'tts': "<speaker audio=\"dialogs-upload/1bdbfde6-622e-402a-a4ed-debcf92d6854/06852eea-ea27-4123-899f-ce346ef920dd.opus\">",
                         'buttons': []
                     },
                     "session": session,
@@ -352,6 +363,16 @@ def main():
 
         if states_dict[user_id].is_creating(10):
             if command:
+                if database.does_reminder_exists(user_id, command):
+                    answer_response = {
+                        "response": {
+                            "text": "У вас уже есть напоминалка с таким названием. Придумайте новое",
+                            "tts": "У вас уже есть напоминалка с таким названием. Придумайте новое"
+                        },
+                        "session": session,
+                        "version": version
+                    }
+                    return answer_response
                 reminder_template[user_id]["title"] = command
                 answer_response = {
                     "response": {
@@ -609,4 +630,4 @@ def main():
 
 
 if __name__ == '__main__':
-    app.run(port=6000, debug=True)
+    app.run()

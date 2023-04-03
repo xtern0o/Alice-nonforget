@@ -113,4 +113,9 @@ class Database:
         data = self.con.execute("""
         SELECT title FROM reminders WHERE owner_id = ? AND title = ?
         """, (user_id, title)).fetchall()
-        return not bool(data)
+        return bool(data)
+
+    def get_exist_users(self):
+        return list(map(lambda l: l[0], self.con.execute("""
+        SELECT user_id FROM users
+        """).fetchall()))

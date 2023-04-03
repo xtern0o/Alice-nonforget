@@ -19,7 +19,7 @@ if [ ! -f $VIRTUALENV/bin/pip ]; then
 fi
 
 # Install the requirements
-$VIRTUALENV/bin/pip install -r alice_app/requirements.txt
+$VIRTUALENV/bin/pip install -r requirements.txt
 
 # Run your glorious application
-$VIRTUALENV/bin/python3 alice_app/main.py
+$VIRTUALENV/bin/python3 server.py

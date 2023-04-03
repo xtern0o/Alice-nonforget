@@ -4,7 +4,7 @@ from flask import jsonify
 def send_help_message(session, version):
     answer_response = {
         "response": {
-            "text": "Помощь",
+            "text": "Список команд",
             "card": {
                 "type": "ItemsList",
                 "header": {

@@ -27,7 +27,7 @@ def main():
     data = request.json
     session = data['session']
     version = data['version']
-    user_id = session['user']['user_id']
+    user_id = session['user_id']
     command = data['request']['command']
 
     if 'user' not in session.keys():
@@ -81,7 +81,9 @@ def main():
             return jsonify(answer_response)
         database.add_new_user(user_id)
         states_dict[user_id] = States()
+
         reminder_template[user_id] = {"title": "", "reminder_list": []}
+        
 
         answer_response = {
             "response": {
@@ -126,9 +128,21 @@ def main():
                                                ], **answer_response)
             return jsonify(answer_response)
 
-    if command in ("что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп", "помоги", "помоги мне", "помощь"):
+    if command in ("что ты умеешь", "какие есть команды", "что делать", "команды", "help", "хелп", "хэлп"):
         states_dict[user_id].set_zero()
         return send_help_message(session, version)
+    if command == "помощь":
+        answer_response = {
+            "response": {
+                'text': get_phrase("ZERO", "zero")['text'],
+                'tts': get_phrase("ZERO", "zero")['tts']
+            },
+            "session": session,
+            "version": version
+        }
+
+        return jsonify(answer_response)
+
     else:
         #  Начальное состояние Алисы
         if not (states_dict[user_id].is_creating() or states_dict[user_id].is_delete() or
@@ -136,6 +150,7 @@ def main():
             if command == 'создать':
                 states_dict[user_id].set_creating(10)
                 answer_response = {
+
                     "response": {
                         'text': get_phrase(states_dict[user_id].get_state(), "start_message_alt")['text'],
                         'tts': get_phrase(states_dict[user_id].get_state(), "start_message_alt")['tts']
@@ -242,8 +257,8 @@ def main():
                 states_dict[user_id].set_delete()
                 answer_response = {
                     "response": {
-                        'text': 'Назовите название напоминалки, которую вы хотите удалить',
-                        'tts': 'Назовите название напоминалки, которую вы хотите удалить'
+                        'text': 'Назовите имя напоминалки, которую вы хотите удалить',
+                        'tts': 'Назовите имя напоминалки, которую вы хотите удалить'
                     },
 
                     "session": session,
@@ -326,7 +341,8 @@ def main():
                 return jsonify(answer_response)
 
         if states_dict[user_id].is_creating(3):
-            if cliche_word := words_in_string(ADDITION_WORDS, command):
+            cliche_word = words_in_string(ADDITION_WORDS, command)
+            if cliche_word :
                 words = command[command.index(cliche_word) + len(cliche_word):]
                 nouns = set([word for word in words.split() if morph.parse(word)[0].tag.POS == 'NOUN'])
                 [reminder_template[user_id]["reminder_list"].append(morph.parse(word)[0].normal_form) for word in nouns]
@@ -336,7 +352,7 @@ def main():
                     "version": version
                 }
                 return jsonify(answer_response)
-            if words_in_string(["все", "хватит", "всё", "нет"], command):
+            if words_in_string(["все", "хватит", "всё"], command):
                 states_dict[user_id].set_zero()
                 database.add_reminder(user_id, reminder_template)
                 reminder_template.pop(user_id)
@@ -406,8 +422,8 @@ def main():
             if "да" in command or "хочу" in command:
                 answer_response = {
                     "response": {
-                        'text': "Теперь перечислите всё, что вы не хотели бы забыть.",
-                        'tts': "Теперь перечислите всё, что вы не хотели бы забыть.",
+                        'text': "Теперь перечислите всё, что вы бы не хотели забыть.",
+                        'tts': "Теперь перечислите всё, что вы бы не хотели забыть.",
                     },
                     "session": session,
                     "version": version
@@ -415,9 +431,11 @@ def main():
                 states_dict[user_id].set_stage(2)
                 return jsonify(answer_response)
             else:
-                reminder_template[user_id]["title"] = command
                 answer_response = {
-                    "response": get_phrase(states_dict[user_id].get_state(), "first_stage_alt_disagree"),
+                    "response": {
+                        "text": "Хорошо, повторите ввод",
+                        "tts": "Поняла, повторите название"
+                    },
                     "version": version,
                     "session": session
                 }
@@ -622,8 +640,8 @@ def main():
             return jsonify(answer_response)
         answer_response = {
             "response": {
-                'text': f"Вы не назвали название напоминалки, которую хотите использовать",
-                'tts': f"Вы не назвали название напоминалки, которую хотите использовать"
+                'text': f"Вы не назвали имя напоминалки, которую хотите использовать",
+                'tts': f"Вы не назвали имя напоминалки, которую хотите использовать"
             },
             "session": session,
             "version": version

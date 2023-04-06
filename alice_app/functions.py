@@ -4,7 +4,7 @@ from flask import jsonify
 def send_help_message(session, version):
     answer_response = {
         "response": {
-            "text": "Список команд",
+            "text": "Список всех команд:\nСоздать - Создать новую напоминалку\nИспользовать - Использовать уже существующую напоминалку\nУдалить - Удалить напоминалку\nЕсть идеи по улучшению навыка?\nпиши на почту: dialogroup@rambler.ru",
             "card": {
                 "type": "ItemsList",
                 "header": {
